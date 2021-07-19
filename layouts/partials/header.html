@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="{{ with .Site.LanguageCode }}{{ . }}{{ else }}en-US{{ end }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="{{ if eq .Description "" }}{{ .Site.Params.description }}{{ else }}{{ .Description }}{{ end }}">
+    {{- with $.Param "keywords" }}
+    <meta name="keywords" content="{{ delimit . "," }}">
+    {{- end }}
+    {{- with $.Param "author" }}
+    <meta name="author" content="{{ . }}">
+    {{- end }}
+    {{ hugo.Generator }}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ "css/style.css" | relURL }}" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Code+Pro:400,700" type="text/css">
+    <link rel="alternate" href="{{ "index.xml" | relURL }}" type="application/rss+xml" title="{{ .Site.Title }}">
+
+    <!-- Katex hooks -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css" integrity="sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc" crossorigin="anonymous">
+
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.js" integrity="sha384-YNHdsYkH6gMx9y3mRkmcJ2mFUjTd0qNQQvY9VYZgQd7DcN7env35GzlmFaZ23JGp" crossorigin="anonymous"></script>
+
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/auto-render.min.js" integrity="sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+    <title>{{ with .Title }}{{.}} - {{ end }}{{ .Site.Title }}</title>
+</head>
+<body>
+
+<header>
+  <div class="container clearfix">
+    <a class="path" href="{{ .Site.BaseURL }}">[{{ .Site.Title }}]</a>
+    <span class="caret"># _</span>
+    <div class="right">
+      {{ range $i, $page := (where .Site.Pages "Section" "pages") }}
+        {{ if not (eq $i 0) }}|{{ end }}
+        <a class="path" href="{{ $page.RelPermalink }}">{{ $page.Title }}</a>
+      {{ end }}
+    </div>
+  </div>
+</header>
+
+<div class="container">
