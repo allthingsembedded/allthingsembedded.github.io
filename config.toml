@@ -175,7 +175,7 @@ copyright = ""            # default: author.name ↓
     alipay = "/path/to/your/alipay-qr-code.png"           # 支付宝二维码
 
   [params.social]                                         # 社交链接
-    a-email = "javier.alvarez@allthingsembedded.net"
+    a-email = "mailto:javier.alvarez@allthingsembedded.net"
     c-twitter = "https://twitter.com/Javier_varez"
     e-linkedin = "https://www.linkedin.com/in/javieralvarez17/?locale=en_US"
     g-github = "https://github.com/Javier-varez"
