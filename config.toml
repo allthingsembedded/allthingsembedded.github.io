@@ -18,7 +18,7 @@ pygmentsCodefencesGuessSyntax = true
 hasCJKLanguage = true     # has chinese/japanese/korean ?
 paginate = 5
 disqusShortname = ""      # disqus_shortname
-googleAnalytics = ""      # UA-XXXXXXXX-X
+googleAnalytics = "UA-120967880-1"      # UA-XXXXXXXX-X
 copyright = ""            # default: author.name ↓
 
 [author]                  # essential
