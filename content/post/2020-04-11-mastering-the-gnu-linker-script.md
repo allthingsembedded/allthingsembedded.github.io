@@ -16,11 +16,11 @@ Most people getting started with embedded development seem to find linker script
 
 Today we will go through the main functions of a linker script to try to shed some light onto their operation. We covered the basic of cross compilation in a previous post. We mentioned that the linker would be the last step in the compilation process. The job of the linker is to take all input object files and libraries (both shared and static) and generate a single executable file. Let's start with some terminology.
 
-### Object files and symbols
+## Object files and symbols
 
 Object files are the generated output produced by the assembly. They contain the machine code as translated by the assembler. As part of an object file, they also contain references to symbols used in the code. These references may be defined in the object file itself (think of a local variable in the source of the object file) or undefined (like a function from a standard library, that is not provided by your object file). Symbols refer to both code and data and they serve to identify where a function starts and where a variable is located in an object file.
 
-### Sections
+## Sections
 
 Object files usually contain multiple sections. Each section contains either code or data that is needed for the target application. Usually the following sections are common in a C program:
 
@@ -30,7 +30,7 @@ Object files usually contain multiple sections. Each section contains either cod
   * `.bss`: Contains all uninitialized global and static variables. These are usually zeroed out by the startup code before we reach the main function. However, In an embedded system we usually provide our own startup code, which means we need to remember to do this ourselves. I wrote a nice article about the startup code a while back [here](/post/2019-01-03-arm-cortex-m-startup-code-for-c-and-c/).
   * **.isr_vector**: Contains the addresses of every Interrupt Service Routine. This is architecture specific and therefore not common to every microcontroller. It is, however, required for [Cortex-M microcontrollers](https://developer.arm.com/docs/dui0552/latest/the-cortex-m3-processor/exception-model/vector-table).
 
-### The role of the linker in detail
+## The role of the linker in detail
 
 The job of the linker is to take all object files and libraries to be linked and create an executable. In order to do this, it must take all symbols from the object files, resolve unknown symbols on each input object file (this is, finding out which object file provides each missing symbol) and create a single output file with no unresolved symbols (except of those of dynamically linked libraries, which are resolved during runtime).
 
