@@ -26,7 +26,7 @@ In the case of our bootloader, the processor will be loading the top of the stac
 
 Looking at the regular reset process we can see that there is a big assumption the processor makes. It assumes that the NVIC table is located at address `0x00000000`. This is why many vendors actually provide **boot pins** to alias the first section of memory to other memory sections or devices. This is used also for embedding vendor-provided bootloaders into an OTP memory and such. For example, an STM32F7 processor uses the following boot pin configuration:
 
-![Boot mode selection for STM32F7](/stm32f7_boot_mode_selection.png)
+![Boot mode selection for STM32F7](/images/stm32f7_boot_mode_selection.png)
 
 Some microcontrollers will even provide you with methods to override these boot addresses, but we will assume that is not an option for us (to make our bootloader more generic).
 

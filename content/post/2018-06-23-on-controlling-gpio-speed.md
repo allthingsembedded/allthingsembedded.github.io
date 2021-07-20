@@ -10,13 +10,11 @@ url: /2018/06/23/on-controlling-gpio-speed/
 
 Most microcontrollers now include the options to select the GPIO speed for a certain pin inside a port. Many will announce this feature as GPIO max current control or slew-rate, but in the end they are talking about the same thing.
 
-First of all, why would you ever need to control GPIO current? Wouldn&#8217;t it be great to leave this at the maximum level at all times? Well, it is usually not that simple, and more so as integrated circuits get larger clock frequencies. Let&#8217;s consider the following model of a push-pull GPIO in an STM32 microcontroller:
+First of all, why would you ever need to control GPIO current? Wouldn't it be great to leave this at the maximum level at all times? Well, it is usually not that simple, and more so as integrated circuits get larger clock frequencies. Let's consider the following model of a push-pull GPIO in an STM32 microcontroller:
 
-![](/gpio.png)
+![GPIO Hardware block on STM32 microcontroller](/images/gpio.png)
 
-&nbsp;
-
-Controlling the output current of the GPIO is effectively controlling the maximum mosfet current when they are working on the active zone. If we consider the parasitic capacitance of the output trace and connected devices, the maximum current will affect the rise times on the trace. This is why this feature is sometimes called GPIO speed control or GPIO slew-rate control. But still, why is this an issue? We could always have the maximum current to satisfy fast commutation frequencies on every pin. These are the reasons why this isn&#8217;t usually a good strategy.
+Controlling the output current of the GPIO is effectively controlling the maximum mosfet current when they are working on the active zone. If we consider the parasitic capacitance of the output trace and connected devices, the maximum current will affect the rise times on the trace. This is why this feature is sometimes called GPIO speed control or GPIO slew-rate control. But still, why is this an issue? We could always have the maximum current to satisfy fast commutation frequencies on every pin. These are the reasons why this isn't usually a good strategy.
 
 * * *
 

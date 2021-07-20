@@ -26,7 +26,7 @@ In addition we need some startup code for the microcontroller. We have already d
 In an arquitectural level we could establish the following hierarchy in terms of modules for our Bootloader.
 
 <p align="center">
-<img src="/bootloader_modules.png" alt="Bootloader High Level Modules" width="400" style="align-content:center;"/>
+<img src="/images/bootloader_modules.png" alt="Bootloader High Level Modules" width="400" style="align-content:center;"/>
 </p>
 
 ## Module descriptions
@@ -38,7 +38,7 @@ Having already defined the main elements of the project, lets then define the fu
 This forms the application layer. After the startup code is run, the main function gets called. Inside this function, we should check if the user button of the STM32F7 Discovery board is pressed. If it is pressed, we start the bootloader load process, waiting for commands from the remote loader and turns on the LED to signal bootloader mode. The flow diagram of this module is shown in the next figure.
 
 <p align="center">
-<img src="/bootloader_main_flowchart.png" alt="Bootloader Main Flow Chart" width="200" align="center"/>
+<img src="/images/bootloader_main_flowchart.png" alt="Bootloader Main Flow Chart" width="200" align="center"/>
 </p>
 
 ### Startup Code Module
@@ -68,7 +68,7 @@ This module is probably the largest of the whole bootloader application. It prov
 The following figure shows the relationships between classes, defining interfaces with gray blocks. Red blocks indicate resources specific to the STM32F7 microcontroller. The purple module contains base addresses for each peripheral and as such is very dependent on the specific microcontroller series and part. On the other hand, red peripherals are usually shared between processor families. In order to modularize them, red modules are template classes which are then instantiated into concrete classes in the orange module. Green modules control peripherals that belong to the core itself.
 
 <p align="center">
-<img src="/bootloader_modules_detail.png" alt="Detail of the modules of the bootloader" width="800" align="center"/>
+<img src="/images/bootloader_modules_detail.png" alt="Detail of the modules of the bootloader" width="800" align="center"/>
 </p>
 
 The System Timer is an abstraction of the SysTick driver. It is a system timer that counts milliseconds each time the timer overflows (at a rate of 1 kHz). This is currently the only module that requires interrupts in order to keep time. Given the simplicity of the bootloader no other interrupts are required.

@@ -60,7 +60,7 @@ If you are looking for a library to render vector fonts, you will probably find 
 
 If you have ever used an old typewriter or have used a terminal to enter commands on your computer then you have seen monospace fonts. These fonts reserve the same width for each character. Many years ago this used to be the norm. However, as computers started to evolve, proportional fonts became the popular choice. Check the examples below for both kinds of fonts:
 
-![](/Proportional-vs-monospace-v4.jpg)
+![Comparison between proportional and monospaced fonts](/images/Proportional-vs-monospace-v4.jpg)
 
 Even though you have a choice here, it is a very easy choice. Given that proportional fonts are very easy to implement from a bitmap, they provide virtually no overhead. In addition to the bitmap, the only thing needed to implement proportional fonts is the metadata of the width of each glyph.
 
@@ -72,7 +72,7 @@ Proportional fonts are usually suited best for displaying text on devices, while
 
 Since pixels on the screen are squared, displaying a glyph using pixels in B/W will result in aliasing. This is the effect by which a diagonal line is represented by small horizontal and vertical lines. For an electronics engineer, aliasing might also be described as the effect by which large frequencies over half of the sampling rate are aliased and then shown as lower frequency components on the digitally sampled signal. For text, the aliasing problem can be best described with a picture:
 
-![](/Anti-aliasing_demo.svg_.png)
+![Anti-aliasing demonstration](/images/Anti-aliasing_demo.svg_.png)
 
 To smooth the edges of a line described by discrete pixels we can apply some low pass filtering to the glyph and get an antialiased version. The question is, how computationally intensive is this task?
 

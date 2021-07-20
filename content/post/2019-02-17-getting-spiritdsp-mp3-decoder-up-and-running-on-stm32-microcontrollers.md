@@ -17,7 +17,7 @@ Then, whenever you need more PCM audio data, you can call `SpiritMP3Decode` spec
 
 However, when I got around to actually running the code it didn't run successfully. It hang in an infinite loop for my example application (Using the Cortex-M4 version of the library for an STM32F411 microcontroller). After reviewing the code and making sure that is it compliant with the API of the library, I went ahead and checked where my application was hanging. It looks something like this:
 
-![SpiritDSP Analysis in radare2](/spirit_mp3_radare.png)
+![SpiritDSP Analysis in radare2](/images/spirit_mp3_radare.png)
 
 This is the loop where my code was hanging. If you take a closer look, it reads data from a memory mapped register, adds one to that number and checks if it is not zero to continue inside the loop. Therefore, to exit the loop, the number read from the memory mapped register must be 0xFFFFFFFF (-1) and I was always reading 0 from this register while debugging the code. Since it doesn't look like we ever write to this register from inside the loop, this must be reading some memory-mapped peripheral that is expected to be in some defined state.
 

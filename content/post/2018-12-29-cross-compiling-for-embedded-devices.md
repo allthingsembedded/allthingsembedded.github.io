@@ -49,7 +49,7 @@ The job of the compiler is to take source code and transform it into some object
 
 The build process can be summarized in the following image:
 
-![](/Compiler_tools-2.png)
+![Compiler tools](/images/Compiler_tools-2.png)
 
 ## Building a cross-compiler toolchain
 

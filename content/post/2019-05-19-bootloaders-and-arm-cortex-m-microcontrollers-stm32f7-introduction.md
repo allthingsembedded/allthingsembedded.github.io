@@ -52,7 +52,7 @@ This post will deal with the basics of building a custom bootloader for an STM32
   * It will provide a communication interface using a UART.
   * It must not use any libraries other than the standard C++ library (libstdc++). This will limit code bloat and reduce the size of the binary.
 
-![Organization of the Flash memory in a STM32F7 microcontroller](/stm32f7_flash_organization.png)
+![Organization of the Flash memory in a STM32F7 microcontroller](/images/stm32f7_flash_organization.png)
 
 With 32 kB of code available to the bootloader, we should have a good base for extending the bootloader with more impressive features in the future. 
 
