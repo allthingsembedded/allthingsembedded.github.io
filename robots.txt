@@ -1,2 +1,2 @@
 User-agent: *
-Sitemap: https://https:/allthingsembedded.github.io/blog/sitemap.xml
+Sitemap: https://https:/allthingsembedded.github.io/sitemap.xml
