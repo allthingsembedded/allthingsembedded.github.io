@@ -1,11 +1,183 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction - AllThingsEmbedded</title><meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=cache-control content="no-transform"><meta http-equiv=cache-control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="Javier Alvarez"><meta name=description content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
-What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&amp;rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP."><meta name=keywords content="Software,Embedded,Engineering"><meta name=generator content="Hugo 0.85.0 with theme even"><link rel=canonical href=https://allthingsembedded.com/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link href=/sass/main.min.57df92a600a37c309f1e95502de0113b42c51592e1616823ee591d871e432044.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction"><meta property="og:description" content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
-What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP."><meta property="og:type" content="article"><meta property="og:url" content="https://allthingsembedded.com/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/"><meta property="article:section" content="post"><meta property="article:published_time" content="2019-05-19T17:23:30+00:00"><meta property="article:modified_time" content="2019-05-19T17:23:30+00:00"><meta itemprop=name content="Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction"><meta itemprop=description content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
-What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP."><meta itemprop=datePublished content="2019-05-19T17:23:30+00:00"><meta itemprop=dateModified content="2019-05-19T17:23:30+00:00"><meta itemprop=wordCount content="893"><meta itemprop=keywords content="ARM,bootloader,Cortex-M,Firmware,FLASH,JTAG,Microcontroller,SRAM,STM32F7,SWD,USB,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction"><meta name=twitter:description content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
-What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP."><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo id=mobile-header-logo></a></div><div class=mobile-navbar-icon><span></span><span></span><span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a></ul></nav><script type=text/javascript src=/js/common.js></script><script type=text/javascript>colorize_base16("mobile-header-logo","AllThingsEmbedded")</script><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo id=logo-wrapper></a></div><script type=text/javascript src=/js/common.js></script><script type=text/javascript>colorize_base16("logo-wrapper","AllThingsEmbedded")</script><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction</h1><div class=post-meta><span class=post-time>2019-05-19</span><div class=post-category><a href=/categories/bootloader/>Bootloader</a></div><span class=more-meta>893 words</span>
-<span class=more-meta>5 mins read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><ul><li><ul><li><a href=#what-is-a-bootloader>What is a bootloader?</a></li><li><a href=#requirements-for-our-bootloader>Requirements for our bootloader</a></li><li><a href=#roadmap>Roadmap</a></li></ul></li></ul></li></ul></nav></div></div><div class=post-content><p>We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.</p><h3 id=what-is-a-bootloader>What is a bootloader?</h3><p>A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP.</p><p>Ok, that makes sense, there must be generic bootloaders that I can use for my application right out of the box, right?</p><p>While there are many open source implementations of bootloaders for many microcontroller families, it might make sense to roll out your own bootloader. Think about the following reasons:</p><ul><li>Your system may require the update of multiple flash memories (some of which may belong to a particular processor) on the field. After all, we are talking about updating your device, not simply a microcontroller.</li><li>You may want to use a custom communication interface that available bootloaders don&rsquo;t support. Many, for example, don&rsquo;t support updating through an Ethernet network or BLE (these are also called Over-The-Air bootloaders).</li><li>You may want to use a custom memory layout where the bootloader will be located and protect it from being overwritten by the application code.</li><li>It might be desirable to protect your firmware object code from being intercepted during the upload process. Depending on your security threat model you may want to encrypt your firmware before it travels through an unprotected channel.</li><li>On this subject, it is also interesting to sign the binary firmware image to protect from malicious firmware being loaded onto de device.</li><li>If we start using complex communication interfaces and security measures such as the ones described above we will end up with a large bootloader. This means that the flash space partitioning between application and bootloader must be properly delimited according to the block size of your non-volatile memory.</li><li>Bootloaders can also check firmware image corruption and stop the boot process if the calculated hash is no expected for the loaded firmware version.</li><li>Verifying the signature during boot time is also interesting and constitutes the basics of Secure Boot, where we establish a root of trust in the system (this may come in the form of a ROM memory with the first stage bootloader) which verifies the integrity of all other components being loaded on the processor.</li><li>Loading an application in SRAM without replacing the existing applications on the Flash. This might be useful if we want to run maintenance software on the device, but we don&rsquo;t have space to store it on non-volatile memory or simply we don&rsquo;t want to for some other reason (security or convenience).</li></ul><p>As you can see, a custom-tailored bootloader is very common for small microcontrollers where Flash space is limited and switching from one microcontroller to another raises different concerns in terms of security, booting process and firmware integrity.</p><h3 id=requirements-for-our-bootloader>Requirements for our bootloader</h3><p>This post will deal with the basics of building a custom bootloader for an STM32F7 microcontroller. These are the specs for the bootloader:</p><ul><li>It must fit in the smallest sector of the built-in Flash for the STM32F746 microcontroller. In this case, the smallest sector is the first, with 32 kB of memory available as you can see in Figure 1.</li><li>It must be able to load code into the Flash memory without corrupting the bootloader even if requested from the user.</li><li>It must be able to load code into the SRAM memory.</li><li>It must be able to run code from both of these targets when instructed to do so.</li><li>It will provide a communication interface using a UART.</li><li>It must not use any libraries other than the standard C++ library (libstdc++). This will limit code bloat and reduce the size of the binary.</li></ul><p><img src=/images/stm32f7_flash_organization.png alt="Organization of the Flash memory in a STM32F7 microcontroller"></p><p>With 32 kB of code available to the bootloader, we should have a good base for extending the bootloader with more impressive features in the future.</p><p>Regarding the first requirement, we can&rsquo;t use less than 32 kB, since to program a sector it must be first erased as a whole. Loading an application into the sector shared with the bootloader will erase the bootloader. We might get around this by copying the bootloader to SRAM on boot, but then we are limiting the available memory for SRAM Applications and potentially risking bricking the board if the power is cut during the update of the bootloader sector. Since we don&rsquo;t want to run the risk of bricking the microcontroller, we can just protect sector 0.</p><h3 id=roadmap>Roadmap</h3><p>I have distributed the bootloader series in a few posts that will cover the complete process of developing a bootloader and the requirements of applications that can be loaded using the bootloader. This is what you can expect to see on the next posts:</p><ol><li>Designing the bootloader.</li><li>Starting a target application from the bootloader.</li><li>Interfacing with the host. Designing the bootloader protocol.</li><li>Writing to the flash memory.</li><li>Developing a host application for the bootloader.</li></ol><p>This is all for now. If you think you might learn something new from this project, stay tuned for the next installment of the bootloader series.</p><p><strong>Footnote</strong>: You can check the complete bootloader <a href=https://github.com/Javier-varez/stm32_bootloader>here</a>, but I think you will find more enticing getting a complete description of the design and the development of the bootloader.</p></div><div class=post-copyright><p class=copyright-item><span class=item-title>Author</span>
-<span class=item-content>Javier Alvarez</span></p><p class=copyright-item><span class=item-title>LastMod</span>
-<span class=item-content>2019-05-19</span></p></div><footer class=post-footer><div class=post-tags><a href=/tags/arm/>ARM</a>
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge,chrome=1">
+<title>Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction - AllThingsEmbedded</title>
+<meta name=renderer content="webkit">
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta http-equiv=cache-control content="no-transform">
+<meta http-equiv=cache-control content="no-siteapp">
+<meta name=theme-color content="#f8f5ec">
+<meta name=msapplication-navbutton-color content="#f8f5ec">
+<meta name=apple-mobile-web-app-capable content="yes">
+<meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec">
+<meta name=author content="Javier Alvarez"><meta name=description content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
+What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&amp;rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP."><meta name=keywords content="Software,Embedded,Engineering">
+<meta name=generator content="Hugo 0.86.0 with theme even">
+<link rel=canonical href=https://allthingsembedded.com/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/>
+<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
+<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
+<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
+<link rel=manifest href=/manifest.json>
+<link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5>
+<link href=/sass/main.min.64709dea827fd8cd68163871eecb608b9747dba02f31ef7b78b54b5be491b06c.css rel=stylesheet>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous>
+<meta property="og:title" content="Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction">
+<meta property="og:description" content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
+What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://allthingsembedded.com/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/"><meta property="article:section" content="post">
+<meta property="article:published_time" content="2019-05-19T17:23:30+00:00">
+<meta property="article:modified_time" content="2019-05-19T17:23:30+00:00">
+<meta itemprop=name content="Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction">
+<meta itemprop=description content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
+What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP."><meta itemprop=datePublished content="2019-05-19T17:23:30+00:00">
+<meta itemprop=dateModified content="2019-05-19T17:23:30+00:00">
+<meta itemprop=wordCount content="893">
+<meta itemprop=keywords content="ARM,bootloader,Cortex-M,Firmware,FLASH,JTAG,Microcontroller,SRAM,STM32F7,SWD,USB,"><meta name=twitter:card content="summary">
+<meta name=twitter:title content="Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction">
+<meta name=twitter:description content="We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
+What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP."><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]-->
+</head>
+<body>
+<div id=mobile-navbar class=mobile-navbar>
+<div class=mobile-header-logo>
+<a href=/ class=logo id=mobile-header-logo>
+</a>
+</div>
+<div class=mobile-navbar-icon>
+<span></span>
+<span></span>
+<span></span>
+</div>
+</div>
+<nav id=mobile-menu class="mobile-menu slideout-menu">
+<ul class=mobile-menu-list>
+<a href=/>
+<li class=mobile-menu-item>Home</li>
+</a><a href=/post/>
+<li class=mobile-menu-item>Archives</li>
+</a><a href=/tags/>
+<li class=mobile-menu-item>Tags</li>
+</a>
+</ul>
+</nav>
+<script type=text/javascript src=/js/common.js></script>
+<script type=text/javascript>colorize_base16("mobile-header-logo","AllThingsEmbedded")</script>
+<div class=container id=mobile-panel>
+<header id=header class=header>
+<div class=logo-wrapper>
+<a href=/ class=logo id=logo-wrapper>
+</a>
+</div>
+<script type=text/javascript src=/js/common.js></script>
+<script type=text/javascript>colorize_base16("logo-wrapper","AllThingsEmbedded")</script>
+<nav class=site-navbar>
+<ul id=menu class=menu>
+<li class=menu-item>
+<a class=menu-item-link href=/>Home</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/post/>Archives</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/tags/>Tags</a>
+</li>
+</ul>
+</nav>
+</header>
+<main id=main class=main>
+<div class=content-wrapper>
+<div id=content class=content>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction</h1>
+<div class=post-meta>
+<span class=post-time> 2019-05-19 </span>
+<div class=post-category>
+<a href=/categories/bootloader/> Bootloader </a>
+</div>
+<span class=more-meta> 893 words </span>
+<span class=more-meta> 5 mins read </span>
+</div>
+</header>
+<div class=post-toc id=post-toc>
+<h2 class=post-toc-title>Contents</h2>
+<div class="post-toc-content always-active">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href=#what-is-a-bootloader>What is a bootloader?</a></li>
+<li><a href=#requirements-for-our-bootloader>Requirements for our bootloader</a></li>
+<li><a href=#roadmap>Roadmap</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+<div class=post-content>
+<p>We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.</p>
+<h3 id=what-is-a-bootloader>What is a bootloader?</h3>
+<p>A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP.</p>
+<p>Ok, that makes sense, there must be generic bootloaders that I can use for my application right out of the box, right?</p>
+<p>While there are many open source implementations of bootloaders for many microcontroller families, it might make sense to roll out your own bootloader. Think about the following reasons:</p>
+<ul>
+<li>Your system may require the update of multiple flash memories (some of which may belong to a particular processor) on the field. After all, we are talking about updating your device, not simply a microcontroller.</li>
+<li>You may want to use a custom communication interface that available bootloaders don&rsquo;t support. Many, for example, don&rsquo;t support updating through an Ethernet network or BLE (these are also called Over-The-Air bootloaders).</li>
+<li>You may want to use a custom memory layout where the bootloader will be located and protect it from being overwritten by the application code.</li>
+<li>It might be desirable to protect your firmware object code from being intercepted during the upload process. Depending on your security threat model you may want to encrypt your firmware before it travels through an unprotected channel.</li>
+<li>On this subject, it is also interesting to sign the binary firmware image to protect from malicious firmware being loaded onto de device.</li>
+<li>If we start using complex communication interfaces and security measures such as the ones described above we will end up with a large bootloader. This means that the flash space partitioning between application and bootloader must be properly delimited according to the block size of your non-volatile memory.</li>
+<li>Bootloaders can also check firmware image corruption and stop the boot process if the calculated hash is no expected for the loaded firmware version.</li>
+<li>Verifying the signature during boot time is also interesting and constitutes the basics of Secure Boot, where we establish a root of trust in the system (this may come in the form of a ROM memory with the first stage bootloader) which verifies the integrity of all other components being loaded on the processor.</li>
+<li>Loading an application in SRAM without replacing the existing applications on the Flash. This might be useful if we want to run maintenance software on the device, but we don&rsquo;t have space to store it on non-volatile memory or simply we don&rsquo;t want to for some other reason (security or convenience).</li>
+</ul>
+<p>As you can see, a custom-tailored bootloader is very common for small microcontrollers where Flash space is limited and switching from one microcontroller to another raises different concerns in terms of security, booting process and firmware integrity.</p>
+<h3 id=requirements-for-our-bootloader>Requirements for our bootloader</h3>
+<p>This post will deal with the basics of building a custom bootloader for an STM32F7 microcontroller. These are the specs for the bootloader:</p>
+<ul>
+<li>It must fit in the smallest sector of the built-in Flash for the STM32F746 microcontroller. In this case, the smallest sector is the first, with 32 kB of memory available as you can see in Figure 1.</li>
+<li>It must be able to load code into the Flash memory without corrupting the bootloader even if requested from the user.</li>
+<li>It must be able to load code into the SRAM memory.</li>
+<li>It must be able to run code from both of these targets when instructed to do so.</li>
+<li>It will provide a communication interface using a UART.</li>
+<li>It must not use any libraries other than the standard C++ library (libstdc++). This will limit code bloat and reduce the size of the binary.</li>
+</ul>
+<p><img src=/images/stm32f7_flash_organization.png alt="Organization of the Flash memory in a STM32F7 microcontroller"></p>
+<p>With 32 kB of code available to the bootloader, we should have a good base for extending the bootloader with more impressive features in the future.</p>
+<p>Regarding the first requirement, we can&rsquo;t use less than 32 kB, since to program a sector it must be first erased as a whole. Loading an application into the sector shared with the bootloader will erase the bootloader. We might get around this by copying the bootloader to SRAM on boot, but then we are limiting the available memory for SRAM Applications and potentially risking bricking the board if the power is cut during the update of the bootloader sector. Since we don&rsquo;t want to run the risk of bricking the microcontroller, we can just protect sector 0.</p>
+<h3 id=roadmap>Roadmap</h3>
+<p>I have distributed the bootloader series in a few posts that will cover the complete process of developing a bootloader and the requirements of applications that can be loaded using the bootloader. This is what you can expect to see on the next posts:</p>
+<ol>
+<li>Designing the bootloader.</li>
+<li>Starting a target application from the bootloader.</li>
+<li>Interfacing with the host. Designing the bootloader protocol.</li>
+<li>Writing to the flash memory.</li>
+<li>Developing a host application for the bootloader.</li>
+</ol>
+<p>This is all for now. If you think you might learn something new from this project, stay tuned for the next installment of the bootloader series.</p>
+<p><strong>Footnote</strong>: You can check the complete bootloader <a href=https://github.com/Javier-varez/stm32_bootloader>here</a>, but I think you will find more enticing getting a complete description of the design and the development of the bootloader.</p>
+</div>
+<div class=post-copyright>
+<p class=copyright-item>
+<span class=item-title>Author</span>
+<span class=item-content>Javier Alvarez</span>
+</p>
+<p class=copyright-item>
+<span class=item-title>LastMod</span>
+<span class=item-content>
+2019-05-19
+</span>
+</p>
+</div>
+<footer class=post-footer>
+<div class=post-tags>
+<a href=/tags/arm/>ARM</a>
 <a href=/tags/bootloader/>bootloader</a>
 <a href=/tags/cortex-m/>Cortex-M</a>
 <a href=/tags/firmware/>Firmware</a>
@@ -15,15 +187,62 @@ What is a bootloader? A bootloader is a piece of firmware that takes care of boo
 <a href=/tags/sram/>SRAM</a>
 <a href=/tags/stm32f7/>STM32F7</a>
 <a href=/tags/swd/>SWD</a>
-<a href=/tags/usb/>USB</a></div><nav class=post-nav><a class=prev href=/post/2019-05-31-bootloaders-and-arm-cortex-m-microcontrollers-design/><i class="iconfont icon-left"></i>
+<a href=/tags/usb/>USB</a>
+</div>
+<nav class=post-nav>
+<a class=prev href=/post/2019-05-31-bootloaders-and-arm-cortex-m-microcontrollers-design/>
+<i class="iconfont icon-left"></i>
 <span class="prev-text nav-default">Bootloaders and ARM Cortex-M microcontrollers: Design</span>
-<span class="prev-text nav-mobile">Prev</span></a>
-<a class=next href=/post/2019-02-17-getting-spiritdsp-mp3-decoder-up-and-running-on-stm32-microcontrollers/><span class="next-text nav-default">Getting SpiritDSP MP3 Decoder up and running on STM32 Microcontrollers</span>
+<span class="prev-text nav-mobile">Prev</span>
+</a>
+<a class=next href=/post/2019-02-17-getting-spiritdsp-mp3-decoder-up-and-running-on-stm32-microcontrollers/>
+<span class="next-text nav-default">Getting SpiritDSP MP3 Decoder up and running on STM32 Microcontrollers</span>
 <span class="next-text nav-mobile">Next</span>
-<i class="iconfont icon-right"></i></a></nav></footer></article></div><script src=https://utteranc.es/client.js repo=allthingsembedded/allthingsembedded.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script><noscript>Please enable JavaScript to view the <a href=https://github.com/utterance>comments powered by utterances.</a></noscript></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:javier.alvarez@allthingsembedded.net class="iconfont icon-email" title=email></a><a href=https://twitter.com/Javier_varez class="iconfont icon-twitter" title=twitter></a><a href="https://www.linkedin.com/in/javieralvarez17/?locale=en_US" class="iconfont icon-linkedin" title=linkedin></a><a href=https://github.com/Javier-varez class="iconfont icon-github" title=github></a><a href=https://allthingsembedded.com/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a></span>
+<i class="iconfont icon-right"></i>
+</a>
+</nav>
+</footer>
+</article>
+</div>
+<script src=https://utteranc.es/client.js repo=allthingsembedded/allthingsembedded.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script>
+<noscript>Please enable JavaScript to view the <a href=https://github.com/utterance>comments powered by utterances.</a></noscript>
+</div>
+</main>
+<footer id=footer class=footer>
+<div class=social-links>
+<a href=mailto:javier.alvarez@allthingsembedded.net class="iconfont icon-email" title=email></a>
+<a href=https://twitter.com/Javier_varez class="iconfont icon-twitter" title=twitter></a>
+<a href="https://www.linkedin.com/in/javieralvarez17/?locale=en_US" class="iconfont icon-linkedin" title=linkedin></a>
+<a href=https://github.com/Javier-varez class="iconfont icon-github" title=github></a>
+<a href=https://allthingsembedded.com/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a>
+</div>
+<div class=copyright>
+<span class=power-by>
+Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
+</span>
 <span class=division>|</span>
-<span class=theme-info>Theme -
-<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a></span>
-<span class=copyright-year>&copy;
+<span class=theme-info>
+Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a>
+</span>
+<span class=copyright-year>
+&copy;
 2018 -
-2021<span class=heart><i class="iconfont icon-heart"></i></span><span>Javier Alvarez</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js></script><script type=text/javascript>window.MathJax={tex:{}}</script><script async src=https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin=anonymous></script><script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-120967880-1','auto'),ga('set','anonymizeIp',!0),ga('send','pageview'))</script><script async src=https://www.google-analytics.com/analytics.js></script></body></html>
+2021<span class=heart><i class="iconfont icon-heart"></i></span><span>Javier Alvarez</span>
+</span>
+</div>
+</footer>
+<div class=back-to-top id=back-to-top>
+<i class="iconfont icon-up"></i>
+</div>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js></script>
+<script type=text/javascript>window.MathJax={tex:{}}</script>
+<script async src=https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin=anonymous></script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-120967880-1','auto'),ga('set','anonymizeIp',!0),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+</body>
+</html>
