@@ -41,11 +41,11 @@ The job of the compiler is to take source code and transform it into some object
   * Compilation:
       * This stage takes care of translating all the source code to the assembly language required for the target processor. The compiler usually translates the source code first into an intermediate representation that can be interpreted by the optimizer and with which it can decide to make optimizations on the code to reduce the size of it and increase performance. Later, this intermediate representation is translated into the ASM language used for the target language. Function names and variable names are translated into symbols that are exported whenever it is necessary. Unresolved symbols will be taken care of later in the build process.
       * GCC can run this phase using the gcc -S or g++ -S commands
-  * Assemble:
+  * Assembly:
       * Once the code for each source file has been transformed into ASM files, the assembler can run and convert each of the instructions into machine code or object code that can be run directly on the target. In addition to the machine code, the object file also includes information about the symbols required and contained within the code.
       * GCC uses the as command to assemble the ASM sources.
-  * Linker:
-      * The last step in this process is the running the linker. This step takes care of resolving missing symbols and can perform optimizations such as removing unused code and data. It basically merges all object files into a single executable. The linker can also link other code contained in libraries (static or shared).
+  * Linkage:
+      * The last step in this process is the running the **linker**. This step takes care of resolving missing symbols and can perform optimizations such as removing unused code and data. It basically merges all object files into a single executable. The linker can also link other code contained in libraries (static or shared).
 
 The build process can be summarized in the following image:
 

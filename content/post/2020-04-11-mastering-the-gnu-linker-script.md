@@ -28,7 +28,7 @@ Object files usually contain multiple sections. Each section contains either cod
   * `.rodata`: This contains any data that is marked as read only. It is not unusual to find this data interleaved with the text section.
   * `.data`: This section contains initialized global and static variables. Any global object that has been explicitly initialized to a value different than zero.
   * `.bss`: Contains all uninitialized global and static variables. These are usually zeroed out by the startup code before we reach the main function. However, In an embedded system we usually provide our own startup code, which means we need to remember to do this ourselves. I wrote a nice article about the startup code a while back [here](/post/2019-01-03-arm-cortex-m-startup-code-for-c-and-c/).
-  * **.isr_vector**: Contains the addresses of every Interrupt Service Routine. This is architecture specific and therefore not common to every microcontroller. It is, however, required for [Cortex-M microcontrollers](https://developer.arm.com/docs/dui0552/latest/the-cortex-m3-processor/exception-model/vector-table).
+  * `.isr_vector`: Contains the addresses of every Interrupt Service Routine. This is architecture specific and therefore not common to every microcontroller. It is, however, required for [Cortex-M microcontrollers](https://developer.arm.com/docs/dui0552/latest/the-cortex-m3-processor/exception-model/vector-table).
 
 ## The role of the linker in detail
 
