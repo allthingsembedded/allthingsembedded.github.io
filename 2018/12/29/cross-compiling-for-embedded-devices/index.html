@@ -135,15 +135,15 @@ Most of the target microcontrollers or microprocessors won&rsquo;t usually be su
 <li>GCC can run this phase using the gcc -S or g++ -S commands</li>
 </ul>
 </li>
-<li>Assemble:
+<li>Assembly:
 <ul>
 <li>Once the code for each source file has been transformed into ASM files, the assembler can run and convert each of the instructions into machine code or object code that can be run directly on the target. In addition to the machine code, the object file also includes information about the symbols required and contained within the code.</li>
 <li>GCC uses the as command to assemble the ASM sources.</li>
 </ul>
 </li>
-<li>Linker:
+<li>Linkage:
 <ul>
-<li>The last step in this process is the running the linker. This step takes care of resolving missing symbols and can perform optimizations such as removing unused code and data. It basically merges all object files into a single executable. The linker can also link other code contained in libraries (static or shared).</li>
+<li>The last step in this process is the running the <strong>linker</strong>. This step takes care of resolving missing symbols and can perform optimizations such as removing unused code and data. It basically merges all object files into a single executable. The linker can also link other code contained in libraries (static or shared).</li>
 </ul>
 </li>
 </ul>
