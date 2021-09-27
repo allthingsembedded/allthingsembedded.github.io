@@ -1,7 +1,19 @@
 ---
 title: "Bare Metal C++ Register Access API"
 date: 2021-09-25T20:26:21+02:00
-draft: true
+author: Javier Alvarez
+layout: post
+tags:
+  - ARM
+  - Cortex-M
+  - Memory-mapper registers
+  - Volatile
+  - API
+  - Linker Script
+  - Microcontroller
+  - Object-oriented
+  - Unions
+  - Undefined behavior
 ---
 
 ## Introduction to memory-mapping
@@ -10,19 +22,19 @@ draft: true
 
 One of the most common ways of accessing peripherals from a CPU is `memory-mapping`. In short, this means that the address space of the CPU has some addresses that when accessed read/write peripheral's registers. In order to access such peripherals from our code there are multiple strategies that could be used. This post will explore multiple alternatives and discuss their differences and fitness for their unique task.
 
-As an example of `memory-mapping` we will have a look at a `STM32F030` microcontroller. This is one of the simplest 32-bit ARM Cortex-M MCUs from ST Microelectronics. The architectural information we need is normally described in a [`Reference Manual`](https://www.st.com/resource/en/reference_manual/rm0360-stm32f030x4x6x8xc-and-stm32f070x6xb-advanced-armbased-32bit-mcus-stmicroelectronics.pdf) document. This MCU contains an `ARM Cortex-M0` core that interfaces via a `Bus Matrix` with multiple peripherals. The bus matrix provides access to multiple components of the MCU. Amongst them, we have the following:
+As an example of `memory-mapping` we will have a look at a `STM32F030` microcontroller. This is one of the simplest 32-bit ARM Cortex-M MCUs from ST Microelectronics. The architectural information we need is usually described in a [`Reference Manual`](https://www.st.com/resource/en/reference_manual/rm0360-stm32f030x4x6x8xc-and-stm32f070x6xb-advanced-armbased-32bit-mcus-stmicroelectronics.pdf) document. This MCU contains an `ARM Cortex-M0` core that interfaces via a `Bus Matrix` with multiple peripherals. The bus matrix provides access to multiple components of the MCU. Amongst them, we have the following:
 
   * Internal `RAM` memory.
   * Internal `Flash` memory.
   * A connexion to an `AHB1` bus, which bridges to an `APB` bus.
      * `AHB` is a bus designed by ARM part of the `AMBA` standard. It is a de-facto standard for MCU buses in the ARM Cortex-M world and normally interfaces to high speed peripherals.
-     * `APB` is another bus also part of the `AMBA` standard. It is a lower-speed bus dedicated to peripheral accesses, which normally do not require a large throughput.
+     * `APB` is another bus also part of the `AMBA` standard. It is a lower-speed bus dedicated to peripheral accesses, which normally do not require large throughput.
   * A second `AHB2` bus dedicated to `GPIO` ports.
-     * Notice how GPIO ports have a dedicated `AHB2` bus. This makes sense if we would ever need to perform bitbanging of some protocol using direct GPIO control. In this case, having fast access to the GPIO ports is a definitive advantage.
+     * Notice how GPIO ports have a dedicated `AHB2` bus. This makes sense if we would ever need to perform bitbanging of some protocol using direct GPIO control. In this case, having fast access to the GPIO ports is a clear advantage.
 
 This architecture already hints that almost all peripherals are accessed via the `APB` bus. But, how do we access this bus from the CPU? In order to answer this question, we need to clarify how these buses work. When a bus is connected (interfaced) to another it has associated address ranges. If the address belongs to the target bus, then it is responsible of forwarding the request over this bus and reaching the peripheral located at the requested address.
 
-For instance, accessing any address in the range of `0x48000000` and `0x48001800` will be forward the request through the `AHB2` bus into the corresponding peripheral. The address range reserved for this bus is subdivided into address ranges reserved for peripherals. Therefore, to access `GPIOA`, which is mapped via the AHB2 bus, we can access any address between `0x48000000` and `0x48000400`. The `0x48000000` address is also known as the `base address` of the peripheral, meaning that it is the first address that actually reaches the peripheral. Peripheral registers are often defined with respect to the base address, just providing an offset.
+For instance, accessing any address in the range of `0x48000000` and `0x48001800` will be forward the request through the `AHB2` bus into the corresponding peripheral. The address range reserved for this bus is subdivided into address ranges reserved for peripherals. Therefore, to access `GPIOA`, which is mapped via the AHB2 bus, we can access any address between `0x48000000` and `0x48000400`. The first address `0x48000000` address is also known as the `base address` of the peripheral, meaning that it is the first address that actually reaches the peripheral. Peripheral registers are often defined with respect to the base address, just providing an offset.
 
 Now that we know the address range of the GPIO peripheral, we need to make sense of what each of the addresses in this range mean to the `GPIOA` peripheral. Thankfully this is quite a simple peripheral, so it will be easy to describe. This block of addresses is subdivided into registers. Each of the registers has a single associated address and size. The size of the register is normally native to the bus size of the CPU, which in this case is 32 bits.
 
@@ -32,7 +44,7 @@ The image below shows some of the registers of the GPIO peripheral.
 <img src="/images/bare_metal_reg_access/gpio_map.png" alt="GPIO Registers for an STM32F030 MCU" width="600" style="align-content:center;"/>
 </p>
 
-Therefore, an access to the address `0x48000000` will modify the `GPIOA_MODER` register, used to change the operating mode of the GPIO. Each bit in this register has an associated meaning also defined in the reference manual. Notice that some of these bits have a reset value different than 0. That is, when the peripheral is reset, this bit will have this reset value.
+Therefore, an access to address `0x48000000` will modify the `GPIOA_MODER` register, used to change the operating mode of the GPIO. Each bit in this register has an associated meaning, also defined in the reference manual. Notice that some of these bits have a reset value different than 0. That is, when the peripheral is reset, this bit will be restored to this value.
 
 Even though it is not shown in the previous picture, some bits in some registers might not be writable. For example, the `GPIOA_IDR`, which stands for __Input Data Register__, is a read-only register. The bits in this register cannot be written, as they would have no meaning (we cannot change an input value, after all).
 
@@ -70,7 +82,7 @@ uint32_t* fifo_status = reinterpret_cast<uint32_t*>(...);
 while ((*fifo_status & FIFO_STATUS_FULL_MASK) != 0) { }
 ```
 
-But the previous code has a fatal flaw. Given that nowhere in this code we change the address pointed by `fifo_status`, the compiler is able to optimize the code in the following way:
+But the previous code has a fatal flaw. Given that nowhere in this code we change the address pointed by `fifo_status`, the compiler thinks it is fine to optimize the code in the following way:
 
 ```c++
 uint32_t* fifo_status = reinterpret_cast<uint32_t*>(...);
@@ -89,7 +101,7 @@ volatile uint32_t* fifo_status = reinterpret_cast<volatile uint32_t*>(...);
 while ((*fifo_status & FIFO_STATUS_FULL_MASK) != 0) { }
 ```
 
-Now the compiler cannot optimize out the access in every iteration of the loop, therefore, our code is correct now.
+Now the compiler cannot optimize out the access in every iteration of the loop and the code is correct.
 
 **Advantages** of the Raw pointer access:
   - No infrastructure required other than knowing the addresses of registers and their bits.
@@ -101,8 +113,7 @@ Now the compiler cannot optimize out the access in every iteration of the loop, 
   - Accessing individual bits in the register can be complicated (requiring building masks and performing bitwise operations manually).
   - Easy to forget the `volatile` qualifier when declaring the pointer. Normally this isn't such a problem for people that have been bitten by `volatile` access before, but otherwise it is bound to happen.
   - There is no real type safety. We can write anything into any register, even if the peripherals don't match.
-  - Basically no abstraction over the bare register concept.
-  - Pretty close to writing assembly at this point.
+  - Basically no abstraction over the bare register concept. It is pretty close to writing assembly at this point.
   - Difficult to unit test any code on non-target platforms. Mocking register accesses is not possible with this model.
 
 Given all the drawbacks in the previous list, it seems clear that we should really look for a safer register access abstraction that tries to improve our concerns in the list of disadvantages. Let's examine different approaches.
@@ -207,7 +218,7 @@ static UartRegisters __attribute__((section(".bss.uart_regs"))) uart_regs;
 
 In a unit test, the `.uart_regs` output section will not be defined and therfore the input section `.bss.uart_regs` will form part of the output `.bss` section, making it just part of the program's global unitinialized variables.
 
-Now that we have achieved a viable solution using bitfields and unions let's look at how it compares against the previous solution
+Now that we have achieved a viable solution using bitfields and unions let's look at how it compares against the previous solution.
 
   - **Advantages**:
     - It's pretty great to be able to access bits without manipulating bit offsets.
@@ -232,7 +243,7 @@ uart_regs.status_reg.bits.frame_error = 1;
 // If we wanted to clear multiple bits in a single register write we need to create a temporary variable
 
 // Read the status register
-StatusRegister status_reg = uart_regs.status_reg;
+StatusRegister status_reg = { .reg = uart_regs.status_reg.reg };
 
 // Modify desired bits in the temporary variable
 status_reg.bits.ovfl_error = 1;
@@ -408,26 +419,26 @@ Generating register code is something that we **should** be doing no matter what
 
 ARM created a CMSIS System View Description (SVD) specification that although initially designed to be used with debuggers and other host programs, it is also quite useful for autogenerating peripheral access code. I won't get into the details of how to build the code autogeneration program, but suffice it to say that you can find the SVD format specification [here](https://arm-software.github.io/CMSIS_5/SVD/html/index.html).
 
-If you want to find the SVD files for common microcontrollers you can also refer to the [CMSIS-Packs](https://developer.arm.com/tools-and-software/embedded/cmsis/cmsis-packs), a standardize way to deliver software components from ARM. SVD files will be contained inside the `.pack` files (which are essentially zip files).
+If you want to find the SVD files for common microcontrollers you can also refer to the [CMSIS-Packs](https://developer.arm.com/tools-and-software/embedded/cmsis/cmsis-packs), a standardized way to deliver software components from ARM. SVD files will be contained inside the `.pack` files (which are essentially zip files).
 
 ## Conclusion
  
 In this post we have examined how to control `memory-mapped peripherals` of a CPU in an embedded context by designing an API that allows to control them in a type-safe, performant, free of `undefined behavior` and autogenerated manner. The result was an API that, although quite verbose, can be easily autogenerated and is safe and easy to use in the following regards:
 
-  * Easy to identify when the register is being read/written.
+  * Explicit. It is very easy to identify when the register is being read/written.
   * Volatile access is guaranteed by design.
   * Volatile qualifiers are only applied to actual HW registers, even when we deal with the same data type in normal RAM, these accesses can be optimized by the compiler.
   * Fields provide encapsulation.
   * Fields provide type safety.
-  * Fields that have specific meaning (like `clear-on-write`) can be adapted and included in the API clarifying the uses' expectation.
+  * Fields that have specific meaning (like `clear-on-write`) can be adapted and included in the API clarifying the user's expectation.
   * Zero overhead, as all code is seen by the compiler and can be reduced to a sequence of register accesses.
   * No `undefined behavior` or `implementation-defined behavior`.
 
-**Note**: In this post we have seen quite a few examples of `undefined behavior` and `implementation-defined` behavior. I probably even missed some, but please, do not dismiss the importance of `undefined behavior`. Code that seems to work today might not work tomorrow or even worse, code that __seems__ to work today actually doesn't in some subtle and perverse way. If possible, I would encourage you to look into other safer language alternatives like `Rust`, but of course this is not an option for every body for multiple reasons (legacy code, language familiarity for the team, compiler support or other factors). That's why I think as C++ developers we need to take an active role in the safety of the code we write and actively work with the best static/dynamic analisys tools at our disposal, as well as learning the intricacies of the language and being remarkably careful about safety.
+**Note**: In this post we have seen quite a few examples of `undefined behavior` and `implementation-defined` behavior. I probably even missed some, but please, do not dismiss the importance of `undefined behavior`. Code that seems to work today might not work tomorrow or even worse, code that __seems__ to work today actually doesn't in some subtle and perverse way. If possible, I would encourage you to look into other safer language alternatives like `Rust`, but of course this is not an option for everybody for multiple reasons (legacy code, language familiarity for the team, compiler support or other factors). That's why I think as C++ developers we need to take an active role in the safety of the code we write and actively work with the best static/dynamic analysis tools at our disposal, as well as learning the intricacies of the language and being remarkably careful about safety.
  
 ## Acknowledgements
 
-The API presented here is inspired from the [`svd2rust`](https://github.com/rust-embedded/svd2rust) project, which uses vendor SVD files to autogenerate rust code for register access known as `peripheral access crates` or `PAC`. The API defined in this article is, after all, an adapted version of the Rust code  generated by the `svd2rust` project. Unfortunately, safety is not often the first concern when designing code in C++, but hopefully this article will inspire you to design safer API's, free of the `undefined behavior` which so easily creeps into C++ or C code.
+The API presented here is inspired from the [`svd2rust`](https://github.com/rust-embedded/svd2rust) project, which uses vendor SVD files to autogenerate rust code for register access known as `peripheral access crates` or `PAC`. The API defined in this article is, after all, an adapted version of the Rust code generated by the `svd2rust` project. Unfortunately, safety is not often the first concern when designing code in C++, but hopefully this article will inspire you to design safer API's, free of the `undefined behavior` which so easily creeps into C++ or C code.
 
 I personally hope Rust will become the next language for embedded development and I see a great wave of developers already pushing for more modern and safer programming practices. For now, many of us still live in C or C++ land, but that should not mean that we cannot benefit from some of the ideas around safety and modern development that are being brought into the embedded community but the new and vibrant embedded rust community.
 
