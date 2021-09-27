@@ -1,0 +1,846 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge,chrome=1">
+<title>Bare Metal C++ Register Access API - AllThingsEmbedded</title>
+<meta name=renderer content="webkit">
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta http-equiv=cache-control content="no-transform">
+<meta http-equiv=cache-control content="no-siteapp">
+<meta name=theme-color content="#f8f5ec">
+<meta name=msapplication-navbutton-color content="#f8f5ec">
+<meta name=apple-mobile-web-app-capable content="yes">
+<meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec">
+<meta name=author content="Javier Alvarez"><meta name=description content="Introduction to memory-mapping Note: This section is introductory material for those who are not yet familiar with the concept of memory-mapping. If you are already experienced with memory-mapping feel free to jump to the next section. Most likely you won&amp;rsquo;t miss anything new.
+One of the most common ways of accessing peripherals from a CPU is memory-mapping. In short, this means that the address space of the CPU has some addresses that when accessed read/write peripheral&amp;rsquo;s registers."><meta name=keywords content="Software,Embedded,Engineering">
+<meta name=generator content="Hugo 0.88.1 with theme even">
+<link rel=canonical href=https://allthingsembedded.com/post/bare-metal-register-access-api/>
+<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
+<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
+<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
+<link rel=manifest href=/manifest.json>
+<link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5>
+<link href=/sass/main.min.64709dea827fd8cd68163871eecb608b9747dba02f31ef7b78b54b5be491b06c.css rel=stylesheet>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous>
+<meta property="og:title" content="Bare Metal C++ Register Access API">
+<meta property="og:description" content="Introduction to memory-mapping Note: This section is introductory material for those who are not yet familiar with the concept of memory-mapping. If you are already experienced with memory-mapping feel free to jump to the next section. Most likely you won&rsquo;t miss anything new.
+One of the most common ways of accessing peripherals from a CPU is memory-mapping. In short, this means that the address space of the CPU has some addresses that when accessed read/write peripheral&rsquo;s registers.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://allthingsembedded.com/post/bare-metal-register-access-api/"><meta property="article:section" content="post">
+<meta property="article:published_time" content="2021-09-25T20:26:21+02:00">
+<meta property="article:modified_time" content="2021-09-25T20:26:21+02:00">
+<meta itemprop=name content="Bare Metal C++ Register Access API">
+<meta itemprop=description content="Introduction to memory-mapping Note: This section is introductory material for those who are not yet familiar with the concept of memory-mapping. If you are already experienced with memory-mapping feel free to jump to the next section. Most likely you won&rsquo;t miss anything new.
+One of the most common ways of accessing peripherals from a CPU is memory-mapping. In short, this means that the address space of the CPU has some addresses that when accessed read/write peripheral&rsquo;s registers."><meta itemprop=datePublished content="2021-09-25T20:26:21+02:00">
+<meta itemprop=dateModified content="2021-09-25T20:26:21+02:00">
+<meta itemprop=wordCount content="4241">
+<meta itemprop=keywords content="ARM,Cortex-M,Memory-mapper registers,Volatile,API,Linker Script,Microcontroller,Object-oriented,Unions,Undefined behavior,"><meta name=twitter:card content="summary">
+<meta name=twitter:title content="Bare Metal C++ Register Access API">
+<meta name=twitter:description content="Introduction to memory-mapping Note: This section is introductory material for those who are not yet familiar with the concept of memory-mapping. If you are already experienced with memory-mapping feel free to jump to the next section. Most likely you won&rsquo;t miss anything new.
+One of the most common ways of accessing peripherals from a CPU is memory-mapping. In short, this means that the address space of the CPU has some addresses that when accessed read/write peripheral&rsquo;s registers."><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
+<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]-->
+</head>
+<body>
+<div id=mobile-navbar class=mobile-navbar>
+<div class=mobile-header-logo>
+<a href=/ class=logo id=mobile-header-logo>
+</a>
+</div>
+<div class=mobile-navbar-icon>
+<span></span>
+<span></span>
+<span></span>
+</div>
+</div>
+<nav id=mobile-menu class="mobile-menu slideout-menu">
+<ul class=mobile-menu-list>
+<a href=/>
+<li class=mobile-menu-item>Home</li>
+</a><a href=/post/>
+<li class=mobile-menu-item>Archives</li>
+</a><a href=/tags/>
+<li class=mobile-menu-item>Tags</li>
+</a>
+</ul>
+</nav>
+<script type=text/javascript src=/js/common.js></script>
+<script type=text/javascript>colorize_base16("mobile-header-logo","AllThingsEmbedded")</script>
+<div class=container id=mobile-panel>
+<header id=header class=header>
+<div class=logo-wrapper>
+<a href=/ class=logo id=logo-wrapper>
+</a>
+</div>
+<script type=text/javascript src=/js/common.js></script>
+<script type=text/javascript>colorize_base16("logo-wrapper","AllThingsEmbedded")</script>
+<nav class=site-navbar>
+<ul id=menu class=menu>
+<li class=menu-item>
+<a class=menu-item-link href=/>Home</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/post/>Archives</a>
+</li><li class=menu-item>
+<a class=menu-item-link href=/tags/>Tags</a>
+</li>
+</ul>
+</nav>
+</header>
+<main id=main class=main>
+<div class=content-wrapper>
+<div id=content class=content>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>Bare Metal C++ Register Access API</h1>
+<div class=post-meta>
+<span class=post-time> 2021-09-25 </span>
+<span class=more-meta> 4241 words </span>
+<span class=more-meta> 20 mins read </span>
+</div>
+</header>
+<div class=post-toc id=post-toc>
+<h2 class=post-toc-title>Contents</h2>
+<div class="post-toc-content always-active">
+<nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#introduction-to-memory-mapping>Introduction to memory-mapping</a></li>
+<li><a href=#raw-pointer-access>Raw pointer access</a>
+<ul>
+<li><a href=#volatile-access>Volatile access</a></li>
+</ul>
+</li>
+<li><a href=#getting-help-from-unions-and-bitfields>Getting help from unions and bitfields</a></li>
+<li><a href=#a-safer-api-with-strongly-typed-fields>A safer API with strongly-typed fields</a></li>
+<li><a href=#automating-the-job-with-svd>Automating the job with SVD</a></li>
+<li><a href=#conclusion>Conclusion</a></li>
+<li><a href=#acknowledgements>Acknowledgements</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+<div class=post-content>
+<h2 id=introduction-to-memory-mapping>Introduction to memory-mapping</h2>
+<p><strong>Note:</strong> This section is introductory material for those who are not yet familiar with the concept of memory-mapping. If you are already experienced with memory-mapping feel free to jump to the next section. Most likely you won&rsquo;t miss anything new.</p>
+<p>One of the most common ways of accessing peripherals from a CPU is <code>memory-mapping</code>. In short, this means that the address space of the CPU has some addresses that when accessed read/write peripheral&rsquo;s registers. In order to access such peripherals from our code there are multiple strategies that could be used. This post will explore multiple alternatives and discuss their differences and fitness for their unique task.</p>
+<p>As an example of <code>memory-mapping</code> we will have a look at a <code>STM32F030</code> microcontroller. This is one of the simplest 32-bit ARM Cortex-M MCUs from ST Microelectronics. The architectural information we need is usually described in a <a href=https://www.st.com/resource/en/reference_manual/rm0360-stm32f030x4x6x8xc-and-stm32f070x6xb-advanced-armbased-32bit-mcus-stmicroelectronics.pdf><code>Reference Manual</code></a> document. This MCU contains an <code>ARM Cortex-M0</code> core that interfaces via a <code>Bus Matrix</code> with multiple peripherals. The bus matrix provides access to multiple components of the MCU. Amongst them, we have the following:</p>
+<ul>
+<li>Internal <code>RAM</code> memory.</li>
+<li>Internal <code>Flash</code> memory.</li>
+<li>A connexion to an <code>AHB1</code> bus, which bridges to an <code>APB</code> bus.
+<ul>
+<li><code>AHB</code> is a bus designed by ARM part of the <code>AMBA</code> standard. It is a de-facto standard for MCU buses in the ARM Cortex-M world and normally interfaces to high speed peripherals.</li>
+<li><code>APB</code> is another bus also part of the <code>AMBA</code> standard. It is a lower-speed bus dedicated to peripheral accesses, which normally do not require large throughput.</li>
+</ul>
+</li>
+<li>A second <code>AHB2</code> bus dedicated to <code>GPIO</code> ports.
+<ul>
+<li>Notice how GPIO ports have a dedicated <code>AHB2</code> bus. This makes sense if we would ever need to perform bitbanging of some protocol using direct GPIO control. In this case, having fast access to the GPIO ports is a clear advantage.</li>
+</ul>
+</li>
+</ul>
+<p>This architecture already hints that almost all peripherals are accessed via the <code>APB</code> bus. But, how do we access this bus from the CPU? In order to answer this question, we need to clarify how these buses work. When a bus is connected (interfaced) to another it has associated address ranges. If the address belongs to the target bus, then it is responsible of forwarding the request over this bus and reaching the peripheral located at the requested address.</p>
+<p>For instance, accessing any address in the range of <code>0x48000000</code> and <code>0x48001800</code> will be forward the request through the <code>AHB2</code> bus into the corresponding peripheral. The address range reserved for this bus is subdivided into address ranges reserved for peripherals. Therefore, to access <code>GPIOA</code>, which is mapped via the AHB2 bus, we can access any address between <code>0x48000000</code> and <code>0x48000400</code>. The first address <code>0x48000000</code> address is also known as the <code>base address</code> of the peripheral, meaning that it is the first address that actually reaches the peripheral. Peripheral registers are often defined with respect to the base address, just providing an offset.</p>
+<p>Now that we know the address range of the GPIO peripheral, we need to make sense of what each of the addresses in this range mean to the <code>GPIOA</code> peripheral. Thankfully this is quite a simple peripheral, so it will be easy to describe. This block of addresses is subdivided into registers. Each of the registers has a single associated address and size. The size of the register is normally native to the bus size of the CPU, which in this case is 32 bits.</p>
+<p>The image below shows some of the registers of the GPIO peripheral.</p>
+<p align=center>
+<img src=/images/bare_metal_reg_access/gpio_map.png alt="GPIO Registers for an STM32F030 MCU" width=600 style=align-content:center>
+</p>
+<p>Therefore, an access to address <code>0x48000000</code> will modify the <code>GPIOA_MODER</code> register, used to change the operating mode of the GPIO. Each bit in this register has an associated meaning, also defined in the reference manual. Notice that some of these bits have a reset value different than 0. That is, when the peripheral is reset, this bit will be restored to this value.</p>
+<p>Even though it is not shown in the previous picture, some bits in some registers might not be writable. For example, the <code>GPIOA_IDR</code>, which stands for <strong>Input Data Register</strong>, is a read-only register. The bits in this register cannot be written, as they would have no meaning (we cannot change an input value, after all).</p>
+<h2 id=raw-pointer-access>Raw pointer access</h2>
+<p>The simplest way we can use to access a peripheral register is casting its address into a word pointer. By dereferencing this pointer we can then read or write the peripheral register. This can look something like the following:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=kt>uint32_t</span> <span class=o>*</span><span class=n>gpioa_moder_ptr</span> <span class=o>=</span> <span class=k>reinterpret_cast</span><span class=o>&lt;</span><span class=kt>uint32_t</span><span class=o>*&gt;</span><span class=p>(</span><span class=mh>0x4800&#39;0000</span><span class=p>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>With this, we can write all 32 bits of the registers in a single go:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=o>*</span><span class=n>gpioa_moder_ptr</span> <span class=o>=</span> <span class=n>new_desired_value</span><span class=p>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Or read them also in a single access:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=k>auto</span> <span class=n>gpioa_moder_value</span> <span class=o>=</span> <span class=o>*</span><span class=n>gpioa_moder_ptr</span><span class=p>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Note that the use of <code>reinterpret_cast</code> in the previous examples can actually violate the <code>strict aliasing rules</code>. Therefore, care must be taken when using <code>reinterpret_cast</code> in this context to ensure that no other object is using this memory as a different type or the result will be <code>undefined behavior</code>. If you are interested in this topic, have a look at <a href=https://gist.github.com/shafik/848ae25ee209f698763cffee272a58f8>this</a> post from Shafik Yaghmour.</p>
+<h3 id=volatile-access>Volatile access</h3>
+<p>There is a catch here, though. Registers often can change in HW without software interaction. This causes a potential issue with the compiler optimizer, as some accesses that might seem redundant to the compiler might actually be critical. For example, let&rsquo;s say we need to wait until some HW FIFO is not full. We could write the following code:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=kt>uint32_t</span><span class=o>*</span> <span class=n>fifo_status</span> <span class=o>=</span> <span class=k>reinterpret_cast</span><span class=o>&lt;</span><span class=kt>uint32_t</span><span class=o>*&gt;</span><span class=p>(...);</span>
+
+<span class=c1>// Wait until the status is not full
+</span><span class=c1></span><span class=k>while</span> <span class=p>((</span><span class=o>*</span><span class=n>fifo_status</span> <span class=o>&amp;</span> <span class=n>FIFO_STATUS_FULL_MASK</span><span class=p>)</span> <span class=o>!=</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span> <span class=p>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>But the previous code has a fatal flaw. Given that nowhere in this code we change the address pointed by <code>fifo_status</code>, the compiler thinks it is fine to optimize the code in the following way:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=kt>uint32_t</span><span class=o>*</span> <span class=n>fifo_status</span> <span class=o>=</span> <span class=k>reinterpret_cast</span><span class=o>&lt;</span><span class=kt>uint32_t</span><span class=o>*&gt;</span><span class=p>(...);</span>
+
+<span class=c1>// Wait until the status is not full
+</span><span class=c1></span><span class=k>auto</span> <span class=n>fifo_full</span> <span class=o>=</span> <span class=o>*</span><span class=n>fifo_status</span> <span class=o>&amp;</span> <span class=n>FIFO_STATUS_FULL_MASK</span><span class=p>;</span>
+<span class=k>while</span> <span class=p>(</span><span class=n>fifo_full</span> <span class=o>!=</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span> <span class=p>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>And with this, we can basically wait forever if the fifo was full. Since that is not what we wanted, as this register can change at any point in time, we need to mark the register access as <code>volatile</code>. One way of doing this would be:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=k>volatile</span> <span class=kt>uint32_t</span><span class=o>*</span> <span class=n>fifo_status</span> <span class=o>=</span> <span class=k>reinterpret_cast</span><span class=o>&lt;</span><span class=k>volatile</span> <span class=kt>uint32_t</span><span class=o>*&gt;</span><span class=p>(...);</span>
+
+<span class=c1>// Wait until the status is not full
+</span><span class=c1></span><span class=k>while</span> <span class=p>((</span><span class=o>*</span><span class=n>fifo_status</span> <span class=o>&amp;</span> <span class=n>FIFO_STATUS_FULL_MASK</span><span class=p>)</span> <span class=o>!=</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span> <span class=p>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Now the compiler cannot optimize out the access in every iteration of the loop and the code is correct.</p>
+<p><strong>Advantages</strong> of the Raw pointer access:</p>
+<ul>
+<li>No infrastructure required other than knowing the addresses of registers and their bits.</li>
+<li>Easy to understand and comprehend.</li>
+<li>Register access is quite explicit.</li>
+</ul>
+<p><strong>Disadvantages</strong> of the raw pointer access:</p>
+<ul>
+<li>Manually writing the addresses can be very tiresome and errorprone.</li>
+<li>Accessing individual bits in the register can be complicated (requiring building masks and performing bitwise operations manually).</li>
+<li>Easy to forget the <code>volatile</code> qualifier when declaring the pointer. Normally this isn&rsquo;t such a problem for people that have been bitten by <code>volatile</code> access before, but otherwise it is bound to happen.</li>
+<li>There is no real type safety. We can write anything into any register, even if the peripherals don&rsquo;t match.</li>
+<li>Basically no abstraction over the bare register concept. It is pretty close to writing assembly at this point.</li>
+<li>Difficult to unit test any code on non-target platforms. Mocking register accesses is not possible with this model.</li>
+</ul>
+<p>Given all the drawbacks in the previous list, it seems clear that we should really look for a safer register access abstraction that tries to improve our concerns in the list of disadvantages. Let&rsquo;s examine different approaches.</p>
+<h2 id=getting-help-from-unions-and-bitfields>Getting help from unions and bitfields</h2>
+<p>For this section we will explore an alternative that ARM uses in its CMSIS libraries. This alternative consists on using bitfields to separate bit accesses and work with regsiters and bits in a more declarative way instead of procedural. So, for instance, let&rsquo;s say that we have a register with the following fields:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=c1>/// Status register :
+</span><span class=c1>///   * Offset = 0x10
+</span><span class=c1>///   * Size = 32 bits
+</span><span class=c1>///
+</span><span class=c1>///             |   Bit 0   |   Bit 1   |   Bit 2   |   Bit 3   |   Bit 4   |   Bit 5   |   Bit 6    |   Bit 7     |
+</span><span class=c1>/// Field name  |   busy    |  state[0] |  state[1] |   -       |   -       |   -       | ovfl_error | frame_error |
+</span><span class=c1>/// Reset value |   0       |   X       |   X       |   X       |   X       |   X       |   0        |   1         |
+</span><span class=c1>/// Type        |   RO      |   RO      |   RO      |   -       |   -       |   -       |   RCW      |   RCW       |
+</span><span class=c1>///
+</span><span class=c1>/// RO: Read only register. Writes are ignored.
+</span><span class=c1>/// RCW: Read is valid and sticky. The register is clear-on-write, write a 1 to reset this bit back to 0.
+</span></code></pre></td></tr></table>
+</div>
+</div><p>With this in mind, we could define a bitfield that represents this register:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=k>struct</span> <span class=nc>StatusRegister</span> <span class=p>{</span>
+    <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>busy</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+    <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>state</span><span class=p>:</span> <span class=mi>2</span><span class=p>;</span>
+    <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=o>:</span> <span class=mi>3</span><span class=p>;</span>
+    <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>ovfl_error</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+    <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>frame_error</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+<span class=p>};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>There are a couple of potential issues we should be aware of though:</p>
+<ul>
+<li>The <strong>bit order</strong> in a bitfield is <code>implementation defined</code>, therefore, we <strong>need</strong> to know our compiler behavior to ensure that this code will behave as expected. This also means that <strong>this code is not portable</strong>. In most common compilers, the order of bits in the bitfield starts from the least significant bit first, so buiding with <code>arm-none-eabi-gcc</code> or <code>armclang</code> will produce correct results for this particular case.</li>
+<li>The <strong>types</strong> a bitfield can hold are limited to <strong>integral types and booleans</strong>. Compilers can augment the number of supported types, but yet again, this is <code>implementation defined</code> and varies from compiler to compiler.</li>
+</ul>
+<p>Now, assumming we are not concerned with the portability of this code, we can continue building on this solution. The next obvious thing we want to do is access the whole register in one go (without needing to read bits individually). To do so, maybe we could use a union type?</p>
+<p>Turns out that, while in C using a union for type punning (accessing the bits of one object as another type) is valid, C++ disallows type punning using unions and explicitly makes it <code>undefined behavior</code>. At this point things are really getting hairy, aren&rsquo;t they? Well, in practice, the <code>ARM CMSIS libraries</code> use unions for type punning in an <code>extern "C"</code> block (see <a href=https://github.com/ARM-software/CMSIS_5/blob/d5d9f6dea35a97e08bfff0b3fe1e41d9ab303e3c/CMSIS/Core/Include/core_cm4.h#L321>here</a>), so that should still be a valid alternative. Let&rsquo;s see an example of how that would look like:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=cp>#ifdef __cplusplus
+</span><span class=cp></span><span class=k>extern</span> <span class=s>&#34;C&#34;</span> <span class=p>{</span>
+<span class=cp>#endif  </span><span class=c1>// __cplusplus
+</span><span class=c1></span>
+<span class=k>union</span> <span class=nc>StatusRegister</span> <span class=p>{</span>
+    <span class=k>struct</span> <span class=p>{</span>
+        <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>busy</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+        <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>state</span><span class=p>:</span> <span class=mi>2</span><span class=p>;</span>
+        <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=o>:</span> <span class=mi>3</span><span class=p>;</span>
+        <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>ovfl_error</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+        <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=nl>frame_error</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+    <span class=p>}</span> <span class=n>bits</span><span class=p>;</span>
+    <span class=k>volatile</span> <span class=kt>uint32_t</span> <span class=n>reg</span><span class=p>;</span>
+<span class=p>};</span>
+
+<span class=cp>#ifdef __cplusplus
+</span><span class=cp></span><span class=p>}</span>
+<span class=cp>#endif  </span><span class=c1>// __cplusplus
+</span></code></pre></td></tr></table>
+</div>
+</div><p>Phew! Ok, we have arrived to a potentially decent solution, but how do we handle all the registers of a given peripheral? Probably the easiest is to make sure that they are part of a single structure of data. Let&rsquo;s see an example:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=k>struct</span> <span class=nc>UartRegisters</span> <span class=p>{</span>
+    <span class=n>StatusRegister</span> <span class=n>status_reg</span><span class=p>;</span>
+    <span class=kt>uint32_t</span> <span class=p>[</span><span class=mi>7</span><span class=p>];</span> <span class=c1>// Sometimes we need to introduce padding to make sure the register offsets are correct!
+</span><span class=c1></span>    <span class=n>DataRegister</span> <span class=n>data_reg</span><span class=p>;</span>
+    <span class=n>ControlRegister</span> <span class=n>control_reg</span><span class=p>;</span>
+    <span class=n>InterruptRegister</span> <span class=n>interrupt_reg</span><span class=p>;</span>
+<span class=p>};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>The only missing piece of the puzzle now is to put it all together and instantiate the registers. We could use <code>reinterpret_cast</code> as in the previous section:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=n>UartRegisters</span><span class=o>*</span> <span class=n>uart_regs</span> <span class=o>=</span> <span class=k>reinterpret_cast</span><span class=o>&lt;</span><span class=n>UartRegisters</span><span class=o>*&gt;</span><span class=p>(</span><span class=n>UART_BASE_ADDRESS</span><span class=p>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>This is ok, but testing a uart driver may become a bit problematic, since the <code>UART_BASE_ADDRESS</code> will not be valid in unit tests. An easy solution to this is use some help from our friend the <code>Linker Script</code>.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=n>MEMORY</span>
+<span class=p>{</span>
+  <span class=nl>UART</span> <span class=p>:</span> <span class=n>ORIGIN</span> <span class=o>=</span> <span class=mh>0x40014000</span><span class=p>,</span> <span class=n>LENGTH</span> <span class=o>=</span> <span class=mi>1</span><span class=n>K</span>
+<span class=p>}</span>
+
+<span class=n>SECTIONS</span> <span class=p>{</span>
+  <span class=p>.</span><span class=n>uart_regs</span> <span class=p>(</span><span class=n>NOLOAD</span><span class=p>)</span> <span class=o>:</span> <span class=p>{</span>
+    <span class=o>*</span><span class=p>(.</span><span class=n>bss</span><span class=p>.</span><span class=n>uart_regs</span><span class=p>)</span>
+  <span class=p>}</span> <span class=o>&gt;</span> <span class=n>UART</span>
+<span class=p>}</span> <span class=n>INSERT</span> <span class=n>BEFORE</span> <span class=p>.</span><span class=n>bss</span><span class=p>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>With this <code>Linker Script</code> we can now declare a static instance of our registers and map it to the correct section like:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=k>static</span> <span class=n>UartRegisters</span> <span class=nf>__attribute__</span><span class=p>((</span><span class=n>section</span><span class=p>(</span><span class=s>&#34;.bss.uart_regs&#34;</span><span class=p>)))</span> <span class=n>uart_regs</span><span class=p>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>In a unit test, the <code>.uart_regs</code> output section will not be defined and therfore the input section <code>.bss.uart_regs</code> will form part of the output <code>.bss</code> section, making it just part of the program&rsquo;s global unitinialized variables.</p>
+<p>Now that we have achieved a viable solution using bitfields and unions let&rsquo;s look at how it compares against the previous solution.</p>
+<ul>
+<li>
+<p><strong>Advantages</strong>:</p>
+<ul>
+<li>It&rsquo;s pretty great to be able to access bits without manipulating bit offsets.</li>
+<li>Volatile access is guaranteed by the struct definition. No need to worry about it when accessing the peripheral struct.</li>
+</ul>
+</li>
+<li>
+<p><strong>Drawbacks</strong>:</p>
+<ul>
+<li>Significant amount of non-portable <code>implementation-defined</code> code and potentially containing <code>undefined behavior</code>. In particular:
+<ul>
+<li>Bitfields are not portable because the bitfield order is <code>implementation defined</code>.</li>
+<li>Type punning via unions in C++ is undefined behavior. Actually, the only safe way to perform type punning in C++ is using <code>memcpy</code>.</li>
+<li>Limited type safety, as the bits in a bitfield can only contain integral types or booleans. Using other types is <code>implementation-defined</code> as defined by the compiler you are using.</li>
+</ul>
+</li>
+<li>No control over what is writable and what is not. We cannot make certain bits in a bitfield read-only, but registers may have read-only bits in any given register.</li>
+<li>Little control over when the register is actually read/written. Bit access results in multiple read-writes, which may not be efficient or desired (What if we need to ensure all bits are modified in a single write?).</li>
+<li>No proper type safety, as bits are still integral types or booleans.</li>
+</ul>
+</li>
+</ul>
+<p>Let me demonstrate the register access drawback of wanting to do atomic register changes of multiple bits:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=c1>// The following results in 2 read-modify-write sequences of the UART Status register:
+</span><span class=c1></span><span class=n>uart_regs</span><span class=p>.</span><span class=n>status_reg</span><span class=p>.</span><span class=n>bits</span><span class=p>.</span><span class=n>ovfl_error</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+<span class=n>uart_regs</span><span class=p>.</span><span class=n>status_reg</span><span class=p>.</span><span class=n>bits</span><span class=p>.</span><span class=n>frame_error</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+
+<span class=c1>// If we wanted to clear multiple bits in a single register write we need to create a temporary variable
+</span><span class=c1></span>
+<span class=c1>// Read the status register
+</span><span class=c1></span><span class=n>StatusRegister</span> <span class=n>status_reg</span> <span class=o>=</span> <span class=p>{</span> <span class=p>.</span><span class=n>reg</span> <span class=o>=</span> <span class=n>uart_regs</span><span class=p>.</span><span class=n>status_reg</span><span class=p>.</span><span class=n>reg</span> <span class=p>};</span>
+
+<span class=c1>// Modify desired bits in the temporary variable
+</span><span class=c1></span><span class=n>status_reg</span><span class=p>.</span><span class=n>bits</span><span class=p>.</span><span class=n>ovfl_error</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+<span class=n>status_reg</span><span class=p>.</span><span class=n>bits</span><span class=p>.</span><span class=n>frame_error</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+
+<span class=c1>// Write result to the UART Status register
+</span><span class=c1></span><span class=n>uart_regs</span><span class=p>.</span><span class=n>status_reg</span><span class=p>.</span><span class=n>reg</span> <span class=o>=</span> <span class=n>status_reg</span><span class=p>.</span><span class=n>reg</span><span class=p>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Even in the second case, the situation is not ideal. Remember that the bitfields of the <code>StatusRegister</code> are <code>volatile</code>, so we are removing access optimization even to the temporary variable. Surely we could do better than that!</p>
+<h2 id=a-safer-api-with-strongly-typed-fields>A safer API with strongly-typed fields</h2>
+<p>Well, given that we are using <code>C++</code> and the language has largely evolved over primitive <code>C</code> types, there must be a better alternative to handle register accesses. So far all the code could be compiled in <code>C</code> as well and with no <code>undefined behavior</code>!. The following alternative will make used of functional programming features as well as object oriented features. Let&rsquo;s start with creating an abstraction for a <code>memory-mapped</code> register:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=n>class</span> <span class=n>Register</span> <span class=p>{</span>
+ <span class=nl>public</span><span class=p>:</span>
+  <span class=n>Register</span><span class=p>(</span><span class=k>volatile</span> <span class=kt>uint32_t</span><span class=o>*</span> <span class=n>addr</span><span class=p>)</span> <span class=o>:</span> <span class=n>m_addr</span><span class=p>(</span><span class=n>addr</span><span class=p>)</span> <span class=p>{}</span>
+
+  <span class=cm>/**
+</span><span class=cm>   *  @brief Reads the value of the register returning it.
+</span><span class=cm>   */</span>
+  <span class=kr>inline</span> <span class=kt>uint32_t</span> <span class=n>read</span><span class=p>()</span> <span class=p>{</span>
+    <span class=k>return</span> <span class=o>*</span><span class=n>m_addr</span><span class=p>;</span>
+  <span class=p>}</span>
+
+  <span class=cm>/**
+</span><span class=cm>   *  @brief Writes the register with the passed value.
+</span><span class=cm>   */</span>
+  <span class=kr>inline</span> <span class=kt>void</span> <span class=n>write</span><span class=p>(</span><span class=kt>uint32_t</span> <span class=n>value</span><span class=p>)</span> <span class=p>{</span>
+    <span class=o>*</span><span class=n>m_addr</span> <span class=o>=</span> <span class=n>value</span><span class=p>;</span>
+  <span class=p>}</span>
+
+  <span class=cm>/**
+</span><span class=cm>   *  @brief Modifies the value of the register by running a read-modify-write cycle. 
+</span><span class=cm>   *         The mod_functor is called with the read register value as an argument and 
+</span><span class=cm>   *         should return the desired value to be written to the register.
+</span><span class=cm>   */</span>
+  <span class=kr>inline</span> <span class=kt>void</span> <span class=n>modify</span><span class=p>(</span><span class=k>auto</span> <span class=n>mod_functor</span><span class=p>)</span> <span class=p>{</span>
+    <span class=o>*</span><span class=n>m_addr</span> <span class=o>=</span> <span class=n>mod_functor</span><span class=p>(</span><span class=o>*</span><span class=n>m_addr</span><span class=p>);</span>
+  <span class=p>}</span>
+
+ <span class=nl>private</span><span class=p>:</span>
+  <span class=k>volatile</span> <span class=kt>uint32_t</span><span class=o>*</span> <span class=k>const</span> <span class=n>m_addr</span><span class=p>;</span>
+<span class=p>};</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>With this piece of code we can now use this class for any randon 32-bit register. Notice that we take advantage of function pointers or closures in order to modify a register value and abstract the <code>read-write-modify</code> cycle. We don&rsquo;t know how the register will be modified, as that should depends on the user code, but we know for sure that the register needs to be read first and later written after all modifications are done. That is a handy functional approach to this problem that we will keep using later.</p>
+<p>However, you may ask what is the impact of using a closure as a function parameter, isn&rsquo;t that too costly in runtime? Well, no! Given that the function is marked <code>inline</code> the compiler should be clever enough to figure it out. In fact you can see GCC does it <a href="https://godbolt.org/#g:!((g:!((g:!((h:codeEditor,i:(filename:'1',fontScale:14,fontUsePx:'0',j:1,lang:c%2B%2B,selection:(endColumn:1,endLineNumber:37,positionColumn:1,positionLineNumber:37,selectionStartColumn:1,selectionStartLineNumber:37,startColumn:1,startLineNumber:37),source:'%0A%23include+%3Ccstdint%3E%0A%0Aclass+Register+%7B%0A+public:%0A++Register(volatile+uint32_t*+addr)+:+m_addr(addr)+%7B%7D%0A%0A++uint32_t+read()+%7B%0A++++return+*m_addr%3B%0A++%7D%0A%0A++void+write(uint32_t+value)+%7B%0A++++*m_addr+%3D+value%3B%0A++%7D%0A%0A++void+modify(auto+mod_functor)+%7B%0A++++*m_addr+%3D+mod_functor(*m_addr)%3B%0A++%7D%0A%0A+private:%0A++volatile+uint32_t*+const+m_addr%3B%0A%7D%3B%0A%0Avoid+modify_reg()+%7B%0A++uint32_t+status_reg_mem%3B%0A++Register+status_reg+%7B%26status_reg_mem%7D%3B%0A++%0A++status_reg.modify(%5B%3D%5D(uint32_t+r)+%7B%0A++++uint32_t+w+%3D+r%3B%0A++++if+(r+%26+1)+%7B%0A++++++w+%7C%3D+2%3B%0A++++%7D%0A++++return+w%3B%0A++%7D)%3B%0A%7D%0A%0A'),l:'5',n:'0',o:'C%2B%2B+source+%231',t:'0')),k:49.99999999999999,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:arm1021,filters:(b:'0',binary:'1',commentOnly:'0',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:1,lang:c%2B%2B,libs:!(),options:'-Os+-std%3Dgnu%2B%2B20+-mcpu%3Dcortex-m0plus',selection:(endColumn:1,endLineNumber:1,positionColumn:1,positionLineNumber:1,selectionStartColumn:1,selectionStartLineNumber:1,startColumn:1,startLineNumber:1),source:1,tree:'1'),l:'5',n:'0',o:'ARM+gcc+10.2.1+(none)+(C%2B%2B,+Editor+%231,+Compiler+%231)',t:'0')),k:49.99999999999999,l:'4',n:'0',o:'',s:0,t:'0')),l:'2',n:'0',o:'',t:'0')),version:4">here</a>.</p>
+<p>Now, for the next step, let&rsquo;s create an abstraction for a specific register. We will use the same status register as defined in the previous section for the example.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span><span class=lnt>74
+</span><span class=lnt>75
+</span><span class=lnt>76
+</span><span class=lnt>77
+</span><span class=lnt>78
+</span><span class=lnt>79
+</span><span class=lnt>80
+</span><span class=lnt>81
+</span><span class=lnt>82
+</span><span class=lnt>83
+</span><span class=lnt>84
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=cm>/**
+</span><span class=cm> * @brief Implements an abstraction for a StatusRegister for a hypothetical UART peripheral.
+</span><span class=cm> */</span>
+<span class=k>class</span> <span class=nc>StatusRegister</span> <span class=o>:</span> <span class=n>Register</span> <span class=p>{</span>
+ <span class=k>public</span><span class=o>:</span>
+  <span class=cm>/**
+</span><span class=cm>   * @brief States of the Uart
+</span><span class=cm>   */</span>
+  <span class=k>enum</span> <span class=k>class</span> <span class=nc>State</span> <span class=p>{</span>
+    <span class=n>Active</span><span class=p>,</span>
+    <span class=n>Idle</span><span class=p>,</span>
+    <span class=n>Fault</span>
+  <span class=p>};</span>
+
+  <span class=cm>/**
+</span><span class=cm>   * @brief Abstraction for the fields of a register.
+</span><span class=cm>   */</span>
+  <span class=k>class</span> <span class=nc>Fields</span> <span class=p>{</span>
+   <span class=k>public</span><span class=o>:</span>
+    <span class=n>Fields</span><span class=p>()</span> <span class=p>{</span> 
+      <span class=c1>// Set the register temporary variable to the reset value of the register
+</span><span class=c1></span>      <span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>m_bits</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>m_bits</span><span class=p>));</span>
+    <span class=p>}</span>
+    <span class=k>explicit</span> <span class=nf>Fields</span><span class=p>(</span><span class=kt>uint32_t</span> <span class=n>value</span><span class=p>)</span> <span class=p>{</span> 
+      <span class=c1>// Type punning via memcpy is allowed in C++
+</span><span class=c1></span>      <span class=n>memcpy</span><span class=p>(</span><span class=o>&amp;</span><span class=n>m_bits</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>value</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>value</span><span class=p>));</span>
+    <span class=p>}</span>
+
+    <span class=kr>inline</span> <span class=kt>bool</span> <span class=nf>busy</span><span class=p>()</span> <span class=k>const</span> <span class=p>{</span> <span class=k>return</span> <span class=n>m_bits</span><span class=p>.</span><span class=n>busy</span><span class=p>;</span> <span class=p>}</span>
+    <span class=kr>inline</span> <span class=n>State</span> <span class=nf>state</span><span class=p>()</span> <span class=k>const</span> <span class=p>{</span> <span class=k>return</span> <span class=k>static_cast</span><span class=o>&lt;</span><span class=n>State</span><span class=o>&gt;</span><span class=p>(</span><span class=n>m_bits</span><span class=p>.</span><span class=n>busy</span><span class=p>);</span> <span class=p>}</span>
+    <span class=kr>inline</span> <span class=kt>bool</span> <span class=nf>frame_error</span><span class=p>()</span> <span class=k>const</span> <span class=p>{</span> <span class=k>return</span> <span class=n>m_bits</span><span class=p>.</span><span class=n>frame_error</span><span class=p>;</span> <span class=p>}</span>
+    <span class=kr>inline</span> <span class=kt>bool</span> <span class=nf>overflow_error</span><span class=p>()</span> <span class=k>const</span> <span class=p>{</span> <span class=k>return</span> <span class=n>m_bits</span><span class=p>.</span><span class=n>ovfl_error</span><span class=p>;</span> <span class=p>}</span>
+
+    <span class=kr>inline</span> <span class=kt>void</span> <span class=nf>clear_overflow_error</span><span class=p>()</span> <span class=p>{</span> <span class=n>m_bits</span><span class=p>.</span><span class=n>ovfl_error</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span> <span class=p>}</span>
+    <span class=kr>inline</span> <span class=kt>void</span> <span class=nf>clear_frame_error</span><span class=p>()</span> <span class=p>{</span> <span class=n>m_bits</span><span class=p>.</span><span class=n>frame_error</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span> <span class=p>}</span>
+
+    <span class=kr>inline</span> <span class=kt>uint32_t</span> <span class=nf>reg_value</span><span class=p>()</span> <span class=k>const</span> <span class=p>{</span> 
+      <span class=kt>uint32_t</span> <span class=n>value</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+      <span class=n>memcpy</span><span class=p>(</span><span class=o>&amp;</span><span class=n>value</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>m_bits</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>value</span><span class=p>));</span>
+      <span class=k>return</span> <span class=n>value</span><span class=p>;</span>
+    <span class=p>}</span>
+
+   <span class=k>private</span><span class=o>:</span>
+    <span class=k>struct</span> <span class=p>{</span>
+      <span class=kt>uint32_t</span> <span class=nl>busy</span><span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+      <span class=kt>uint32_t</span> <span class=nl>state</span><span class=p>:</span> <span class=mi>2</span><span class=p>;</span>
+      <span class=kt>uint32_t</span> <span class=o>:</span> <span class=mi>3</span><span class=p>;</span>
+      <span class=kt>uint32_t</span> <span class=nl>ovfl_error</span><span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+      <span class=kt>uint32_t</span> <span class=nl>frame_error</span><span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+      <span class=kt>uint32_t</span> <span class=o>:</span> <span class=mi>24</span><span class=p>;</span> <span class=c1>// Pad bitfield to 32 bits
+</span><span class=c1></span>    <span class=p>}</span> <span class=n>m_bits</span><span class=p>;</span>
+  <span class=p>};</span>
+
+  <span class=n>StatusRegister</span><span class=p>(</span><span class=k>volatile</span> <span class=kt>uint32_t</span><span class=o>*</span> <span class=n>addr</span><span class=p>)</span><span class=o>:</span> <span class=n>Register</span><span class=p>(</span><span class=n>addr</span><span class=p>)</span> <span class=p>{}</span>
+
+  <span class=n>Fields</span> <span class=nf>read</span><span class=p>()</span> <span class=p>{</span> <span class=k>return</span> <span class=n>Fields</span> <span class=p>{</span><span class=n>Register</span><span class=o>::</span><span class=n>read</span><span class=p>()};</span> <span class=p>}</span>
+
+  <span class=kt>void</span> <span class=nf>write</span><span class=p>(</span><span class=k>auto</span> <span class=n>callable</span><span class=p>)</span> <span class=p>{</span> 
+    <span class=n>Fields</span> <span class=n>f</span><span class=p>;</span>
+    <span class=n>callable</span><span class=p>(</span><span class=n>f</span><span class=p>);</span>
+    <span class=n>Register</span><span class=o>::</span><span class=n>write</span><span class=p>(</span><span class=n>f</span><span class=p>.</span><span class=n>reg_value</span><span class=p>());</span>
+  <span class=p>}</span>
+
+  <span class=kt>void</span> <span class=nf>modify</span><span class=p>(</span><span class=k>auto</span> <span class=n>callable</span><span class=p>)</span> <span class=p>{</span> 
+    <span class=n>Register</span><span class=o>::</span><span class=n>modify</span><span class=p>([</span><span class=o>=</span><span class=p>](</span><span class=kt>uint32_t</span> <span class=n>r_val</span><span class=p>)</span> <span class=p>{</span>
+        <span class=n>Fields</span> <span class=n>r</span> <span class=p>{</span><span class=n>r_val</span><span class=p>};</span>
+        <span class=n>Fields</span> <span class=n>w</span><span class=p>;</span>
+        <span class=n>callable</span><span class=p>(</span><span class=n>r</span><span class=p>,</span> <span class=n>w</span><span class=p>);</span>
+        <span class=k>return</span> <span class=n>w</span><span class=p>.</span><span class=n>reg_value</span><span class=p>();</span>
+    <span class=p>});</span>
+  <span class=p>}</span>
+<span class=p>};</span>
+
+<span class=kt>void</span> <span class=nf>example_reg_access</span><span class=p>()</span> <span class=p>{</span>
+  <span class=kt>uint32_t</span> <span class=n>status_reg_mem</span><span class=p>;</span>
+  <span class=n>StatusRegister</span> <span class=n>status_reg</span> <span class=p>{</span><span class=o>&amp;</span><span class=n>status_reg_mem</span><span class=p>};</span>
+  
+  <span class=n>status_reg</span><span class=p>.</span><span class=n>modify</span><span class=p>([</span><span class=o>=</span><span class=p>](</span><span class=k>const</span> <span class=k>auto</span><span class=o>&amp;</span> <span class=n>r</span><span class=p>,</span> <span class=k>auto</span><span class=o>&amp;</span> <span class=n>w</span><span class=p>)</span> <span class=p>{</span>
+    <span class=k>if</span> <span class=p>(</span><span class=n>r</span><span class=p>.</span><span class=n>frame_error</span><span class=p>())</span> <span class=p>{</span>
+      <span class=n>w</span><span class=p>.</span><span class=n>clear_overflow_error</span><span class=p>();</span>
+    <span class=p>}</span>
+    <span class=n>w</span><span class=p>.</span><span class=n>clear_frame_error</span><span class=p>();</span>
+  <span class=p>});</span>
+<span class=p>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>The <code>StatusRegister</code> class clearly states how to read, write or modify the register, using instances of type <code>Fields</code> to interact with these functions. <code>Fields</code> can either be instantiated with the value of the register or with the reset value of the register (default constructor).</p>
+<p>The <code>StatusRegister::Read</code> method simply returns a <code>Fields</code> instance from which we can read the state of the regsiter.</p>
+<p>In order to write the register, one can use <code>StatusRegister::Write</code>, which takes a closure that accepts a <code>Fields</code> as an argument. This <code>Fields</code> instance is default constructed, but the user can later override any fields they desire inside the closure.</p>
+<p>Similarly, to modify a register, one can use <code>StatusRegister::Modify</code>. This function also takes a closure that takes 2 arguments. The first argument is a read-only <code>Fields</code> instance with the current contents of the register. The second argument is another <code>Fields</code> instance which one must populate with the settings desired to be written.</p>
+<p>The <code>Fields</code> class also takes care of providing the correct encapsulation for the register fields. Read-only fields are not writable and special fields like <code>clear-on-write</code> can be safely handled with specific functions that cleraly state what they do.</p>
+<p><code>Fields</code> also provides a type-safe interface. For example, the <code>Fields::state</code> mehtod returns a <code>State</code> instance, something which was simply not possible with the previous version.</p>
+<p>Let&rsquo;s have a look at the tradeoffs of this new implementation.</p>
+<ul>
+<li><strong>Advantages</strong>:
+<ul>
+<li>Great control over field types and encapsulation.</li>
+<li>Functional approach to register writes and register modification actions.</li>
+<li>Register access is guaranteed to be volatile</li>
+<li>No extra overhead by unnecessary volatile qualifiers.</li>
+<li>Specific methods that clarify the operation of special registers like <code>clear-on-write</code> registers.</li>
+<li>No <code>undefined behavior</code> due to strict aliasing, as the bitfield is initialized from the register / read from the register using memcpy instead of an union type.</li>
+</ul>
+</li>
+<li><strong>Drawbacks</strong>:
+<ul>
+<li>More code is needed to define the API, as it is not purely declarative as with the union example.</li>
+<li>Large overhead if optimization level is <code>-O0</code>. Honestly, we should never be building code with <code>-O0</code>, so I personally don&rsquo;t see this as an issue.</li>
+<li>We are still keeping the bitfield, which is <code>implementation-defined</code>. In most cases this is good enough as virtually all compilers use the same ordering for their fields. If desired, the bitfield could be replaced, as now it is only an implementation detail of the <code>Fields</code> class.</li>
+</ul>
+</li>
+</ul>
+<p>So we have achieved a pretty great solution, but it implies a very significant amount of code we need to write for every single register. This makes it rather errorprone so we must find a way to get around the new issue. The answer lays in code autogeneration. Given that the structure of the code is now known, it only needs to be specialized for each register. We will explore this in the next section.</p>
+<h2 id=automating-the-job-with-svd>Automating the job with SVD</h2>
+<p>Generating register code is something that we <strong>should</strong> be doing no matter what the chosen API is. But of course, to autogenerate such register API&rsquo;s requires first having access to the peripherals and register definitions in a convenient format. In the case of ARM microcontrollers we are in luck.</p>
+<p>ARM created a CMSIS System View Description (SVD) specification that although initially designed to be used with debuggers and other host programs, it is also quite useful for autogenerating peripheral access code. I won&rsquo;t get into the details of how to build the code autogeneration program, but suffice it to say that you can find the SVD format specification <a href=https://arm-software.github.io/CMSIS_5/SVD/html/index.html>here</a>.</p>
+<p>If you want to find the SVD files for common microcontrollers you can also refer to the <a href=https://developer.arm.com/tools-and-software/embedded/cmsis/cmsis-packs>CMSIS-Packs</a>, a standardized way to deliver software components from ARM. SVD files will be contained inside the <code>.pack</code> files (which are essentially zip files).</p>
+<h2 id=conclusion>Conclusion</h2>
+<p>In this post we have examined how to control <code>memory-mapped peripherals</code> of a CPU in an embedded context by designing an API that allows to control them in a type-safe, performant, free of <code>undefined behavior</code> and autogenerated manner. The result was an API that, although quite verbose, can be easily autogenerated and is safe and easy to use in the following regards:</p>
+<ul>
+<li>Explicit. It is very easy to identify when the register is being read/written.</li>
+<li>Volatile access is guaranteed by design.</li>
+<li>Volatile qualifiers are only applied to actual HW registers, even when we deal with the same data type in normal RAM, these accesses can be optimized by the compiler.</li>
+<li>Fields provide encapsulation.</li>
+<li>Fields provide type safety.</li>
+<li>Fields that have specific meaning (like <code>clear-on-write</code>) can be adapted and included in the API clarifying the user&rsquo;s expectation.</li>
+<li>Zero overhead, as all code is seen by the compiler and can be reduced to a sequence of register accesses.</li>
+<li>No <code>undefined behavior</code> or <code>implementation-defined behavior</code>.</li>
+</ul>
+<p><strong>Note</strong>: In this post we have seen quite a few examples of <code>undefined behavior</code> and <code>implementation-defined</code> behavior. I probably even missed some, but please, do not dismiss the importance of <code>undefined behavior</code>. Code that seems to work today might not work tomorrow or even worse, code that <strong>seems</strong> to work today actually doesn&rsquo;t in some subtle and perverse way. If possible, I would encourage you to look into other safer language alternatives like <code>Rust</code>, but of course this is not an option for everybody for multiple reasons (legacy code, language familiarity for the team, compiler support or other factors). That&rsquo;s why I think as C++ developers we need to take an active role in the safety of the code we write and actively work with the best static/dynamic analysis tools at our disposal, as well as learning the intricacies of the language and being remarkably careful about safety.</p>
+<h2 id=acknowledgements>Acknowledgements</h2>
+<p>The API presented here is inspired from the <a href=https://github.com/rust-embedded/svd2rust><code>svd2rust</code></a> project, which uses vendor SVD files to autogenerate rust code for register access known as <code>peripheral access crates</code> or <code>PAC</code>. The API defined in this article is, after all, an adapted version of the Rust code generated by the <code>svd2rust</code> project. Unfortunately, safety is not often the first concern when designing code in C++, but hopefully this article will inspire you to design safer API&rsquo;s, free of the <code>undefined behavior</code> which so easily creeps into C++ or C code.</p>
+<p>I personally hope Rust will become the next language for embedded development and I see a great wave of developers already pushing for more modern and safer programming practices. For now, many of us still live in C or C++ land, but that should not mean that we cannot benefit from some of the ideas around safety and modern development that are being brought into the embedded community but the new and vibrant embedded rust community.</p>
+</div>
+<div class=post-copyright>
+<p class=copyright-item>
+<span class=item-title>Author</span>
+<span class=item-content>Javier Alvarez</span>
+</p>
+<p class=copyright-item>
+<span class=item-title>LastMod</span>
+<span class=item-content>
+2021-09-25
+</span>
+</p>
+</div>
+<footer class=post-footer>
+<div class=post-tags>
+<a href=/tags/arm/>ARM</a>
+<a href=/tags/cortex-m/>Cortex-M</a>
+<a href=/tags/memory-mapper-registers/>Memory-mapper registers</a>
+<a href=/tags/volatile/>Volatile</a>
+<a href=/tags/api/>API</a>
+<a href=/tags/linker-script/>Linker Script</a>
+<a href=/tags/microcontroller/>Microcontroller</a>
+<a href=/tags/object-oriented/>Object-oriented</a>
+<a href=/tags/unions/>Unions</a>
+<a href=/tags/undefined-behavior/>Undefined behavior</a>
+</div>
+<nav class=post-nav>
+<a class=next href=/post/2020-04-11-mastering-the-gnu-linker-script/>
+<span class="next-text nav-default">Mastering the GNU linker script</span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i>
+</a>
+</nav>
+</footer>
+</article>
+</div>
+<script src=https://utteranc.es/client.js repo=allthingsembedded/allthingsembedded.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script>
+<noscript>Please enable JavaScript to view the <a href=https://github.com/utterance>comments powered by utterances.</a></noscript>
+</div>
+</main>
+<footer id=footer class=footer>
+<div class=social-links>
+<a href=mailto:javier.alvarez@allthingsembedded.net class="iconfont icon-email" title=email></a>
+<a href=https://twitter.com/Javier_varez class="iconfont icon-twitter" title=twitter></a>
+<a href="https://www.linkedin.com/in/javieralvarez17/?locale=en_US" class="iconfont icon-linkedin" title=linkedin></a>
+<a href=https://github.com/Javier-varez class="iconfont icon-github" title=github></a>
+<a href=https://allthingsembedded.com/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a>
+</div>
+<div class=copyright>
+<span class=power-by>
+Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
+</span>
+<span class=division>|</span>
+<span class=theme-info>
+Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a>
+</span>
+<span class=copyright-year>
+&copy;
+2018 -
+2021<span class=heart><i class="iconfont icon-heart"></i></span><span>Javier Alvarez</span>
+</span>
+</div>
+</footer>
+<div class=back-to-top id=back-to-top>
+<i class="iconfont icon-up"></i>
+</div>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
+<script type=text/javascript src=/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js></script>
+<script type=text/javascript>window.MathJax={tex:{}}</script>
+<script async src=https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin=anonymous></script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-120967880-1','auto'),ga('set','anonymizeIp',!0),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+</body>
+</html>
