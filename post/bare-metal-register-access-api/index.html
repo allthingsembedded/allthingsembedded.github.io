@@ -33,7 +33,7 @@ One of the most common ways of accessing peripherals from a CPU is memory-mappin
 <meta itemprop=description content="Introduction to memory-mapping Note: This section is introductory material for those who are not yet familiar with the concept of memory-mapping. If you are already experienced with memory-mapping feel free to jump to the next section. Most likely you won&rsquo;t miss anything new.
 One of the most common ways of accessing peripherals from a CPU is memory-mapping. In short, this means that the address space of the CPU has some addresses that when accessed read/write peripheral&rsquo;s registers."><meta itemprop=datePublished content="2021-09-25T20:26:21+02:00">
 <meta itemprop=dateModified content="2021-09-25T20:26:21+02:00">
-<meta itemprop=wordCount content="4241">
+<meta itemprop=wordCount content="4267">
 <meta itemprop=keywords content="ARM,Cortex-M,Memory-mapper registers,Volatile,API,Linker Script,Microcontroller,Object-oriented,Unions,Undefined behavior,"><meta name=twitter:card content="summary">
 <meta name=twitter:title content="Bare Metal C++ Register Access API">
 <meta name=twitter:description content="Introduction to memory-mapping Note: This section is introductory material for those who are not yet familiar with the concept of memory-mapping. If you are already experienced with memory-mapping feel free to jump to the next section. Most likely you won&rsquo;t miss anything new.
@@ -93,8 +93,8 @@ One of the most common ways of accessing peripherals from a CPU is memory-mappin
 <h1 class=post-title>Bare Metal C++ Register Access API</h1>
 <div class=post-meta>
 <span class=post-time> 2021-09-25 </span>
-<span class=more-meta> 4241 words </span>
-<span class=more-meta> 20 mins read </span>
+<span class=more-meta> 4267 words </span>
+<span class=more-meta> 21 mins read </span>
 </div>
 </header>
 <div class=post-toc id=post-toc>
@@ -508,6 +508,7 @@ One of the most common ways of accessing peripherals from a CPU is memory-mappin
 </span><span class=lnt>28
 </span><span class=lnt>29
 </span><span class=lnt>30
+</span><span class=lnt>31
 </span></code></pre></td>
 <td class=lntd>
 <pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=n>class</span> <span class=n>Register</span> <span class=p>{</span>
@@ -533,7 +534,8 @@ One of the most common ways of accessing peripherals from a CPU is memory-mappin
 </span><span class=cm>   *         The mod_functor is called with the read register value as an argument and 
 </span><span class=cm>   *         should return the desired value to be written to the register.
 </span><span class=cm>   */</span>
-  <span class=kr>inline</span> <span class=kt>void</span> <span class=n>modify</span><span class=p>(</span><span class=k>auto</span> <span class=n>mod_functor</span><span class=p>)</span> <span class=p>{</span>
+  <span class=n>template</span><span class=o>&lt;</span><span class=n>class</span> <span class=n>FuncPtr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>enable_if_t</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>is_invocable_v</span><span class=o>&lt;</span><span class=n>FuncPtr</span><span class=p>,</span> <span class=kt>uint32_t</span><span class=o>&gt;</span><span class=p>,</span> <span class=kt>bool</span><span class=o>&gt;</span> <span class=o>=</span> <span class=nb>false</span><span class=o>&gt;</span>
+  <span class=kr>inline</span> <span class=kt>void</span> <span class=n>modify</span><span class=p>(</span><span class=n>FuncPtr</span> <span class=n>mod_functor</span><span class=p>)</span> <span class=p>{</span>
     <span class=o>*</span><span class=n>m_addr</span> <span class=o>=</span> <span class=n>mod_functor</span><span class=p>(</span><span class=o>*</span><span class=n>m_addr</span><span class=p>);</span>
   <span class=p>}</span>
 
@@ -631,6 +633,8 @@ One of the most common ways of accessing peripherals from a CPU is memory-mappin
 </span><span class=lnt>82
 </span><span class=lnt>83
 </span><span class=lnt>84
+</span><span class=lnt>85
+</span><span class=lnt>86
 </span></code></pre></td>
 <td class=lntd>
 <pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=cm>/**
@@ -690,13 +694,15 @@ One of the most common ways of accessing peripherals from a CPU is memory-mappin
 
   <span class=n>Fields</span> <span class=nf>read</span><span class=p>()</span> <span class=p>{</span> <span class=k>return</span> <span class=n>Fields</span> <span class=p>{</span><span class=n>Register</span><span class=o>::</span><span class=n>read</span><span class=p>()};</span> <span class=p>}</span>
 
-  <span class=kt>void</span> <span class=nf>write</span><span class=p>(</span><span class=k>auto</span> <span class=n>callable</span><span class=p>)</span> <span class=p>{</span> 
+  <span class=k>template</span><span class=o>&lt;</span><span class=k>class</span> <span class=nc>FuncPtr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>enable_if_t</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>is_invocable_v</span><span class=o>&lt;</span><span class=n>FuncPtr</span><span class=p>,</span> <span class=n>Fields</span><span class=o>&amp;&gt;</span><span class=p>,</span> <span class=kt>bool</span><span class=o>&gt;</span> <span class=o>=</span> <span class=nb>false</span><span class=o>&gt;</span>
+  <span class=kt>void</span> <span class=n>write</span><span class=p>(</span><span class=n>FuncPtr</span> <span class=n>callable</span><span class=p>)</span> <span class=p>{</span>
     <span class=n>Fields</span> <span class=n>f</span><span class=p>;</span>
     <span class=n>callable</span><span class=p>(</span><span class=n>f</span><span class=p>);</span>
     <span class=n>Register</span><span class=o>::</span><span class=n>write</span><span class=p>(</span><span class=n>f</span><span class=p>.</span><span class=n>reg_value</span><span class=p>());</span>
   <span class=p>}</span>
 
-  <span class=kt>void</span> <span class=nf>modify</span><span class=p>(</span><span class=k>auto</span> <span class=n>callable</span><span class=p>)</span> <span class=p>{</span> 
+  <span class=k>template</span><span class=o>&lt;</span><span class=k>class</span> <span class=nc>FuncPtr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>enable_if_t</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>is_invocable_v</span><span class=o>&lt;</span><span class=n>FuncPtr</span><span class=p>,</span> <span class=k>const</span> <span class=n>Fields</span><span class=o>&amp;</span><span class=p>,</span> <span class=n>Fields</span><span class=o>&amp;&gt;</span><span class=p>,</span> <span class=kt>bool</span><span class=o>&gt;</span> <span class=o>=</span> <span class=nb>false</span><span class=o>&gt;</span>
+  <span class=kt>void</span> <span class=n>modify</span><span class=p>(</span><span class=n>FuncPtr</span> <span class=n>callable</span><span class=p>)</span> <span class=p>{</span>
     <span class=n>Register</span><span class=o>::</span><span class=n>modify</span><span class=p>([</span><span class=o>=</span><span class=p>](</span><span class=kt>uint32_t</span> <span class=n>r_val</span><span class=p>)</span> <span class=p>{</span>
         <span class=n>Fields</span> <span class=n>r</span> <span class=p>{</span><span class=n>r_val</span><span class=p>};</span>
         <span class=n>Fields</span> <span class=n>w</span><span class=p>;</span>
