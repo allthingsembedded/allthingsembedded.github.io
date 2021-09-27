@@ -283,7 +283,8 @@ class Register {
    *         The mod_functor is called with the read register value as an argument and 
    *         should return the desired value to be written to the register.
    */
-  inline void modify(auto mod_functor) {
+  template<class FuncPtr, std::enable_if_t<std::is_invocable_v<FuncPtr, uint32_t>, bool> = false>
+  inline void modify(FuncPtr mod_functor) {
     *m_addr = mod_functor(*m_addr);
   }
 
@@ -356,13 +357,15 @@ class StatusRegister : Register {
 
   Fields read() { return Fields {Register::read()}; }
 
-  void write(auto callable) { 
+  template<class FuncPtr, std::enable_if_t<std::is_invocable_v<FuncPtr, Fields&>, bool> = false>
+  void write(FuncPtr callable) {
     Fields f;
     callable(f);
     Register::write(f.reg_value());
   }
 
-  void modify(auto callable) { 
+  template<class FuncPtr, std::enable_if_t<std::is_invocable_v<FuncPtr, const Fields&, Fields&>, bool> = false>
+  void modify(FuncPtr callable) {
     Register::modify([=](uint32_t r_val) {
         Fields r {r_val};
         Fields w;
