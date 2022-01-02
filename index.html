@@ -84,6 +84,25 @@
 <section id=posts class=posts>
 <article class=post>
 <header class=post-header>
+<h1 class=post-title><a class=post-link href=/post/data_structure_static_pointer/>Data Structures: Ditto::static_ptr&lt;Base, Derived, ...></a></h1>
+<div class=post-meta>
+<span class=post-time> 2022-01-02 </span>
+<span class=more-meta> 992 words </span>
+<span class=more-meta> 5 mins read </span>
+</div>
+</header>
+<div class=post-content>
+<div class=post-summary>
+One of the nice things about C++ compared to C is its ability to define reusable types and data structures. They make code reuse easier and also help with reasoning if the abstraction is high-level enough.
+Today we are going to talk about static_ptr from the library Ditto. Dynamic allocation is often forbidden when developing embedded systems. This leads to allocating most things either in the stack or globally. A static_ptr allows the user to statically allocate an object of a derived class and access it as a base class pointer.
+</div>
+<div class=read-more>
+<a href=/post/data_structure_static_pointer/ class=read-more-link>Read more...</a>
+</div>
+</div>
+</article>
+<article class=post>
+<header class=post-header>
 <h1 class=post-title><a class=post-link href=/post/bare-metal-register-access-api/>Bare Metal C++ Register Access API</a></h1>
 <div class=post-meta>
 <span class=post-time> 2021-09-25 </span>
@@ -161,28 +180,6 @@ As we talked about on the last post, we are not going to be using any libraries,
 </div>
 <div class=read-more>
 <a href=/post/2019-05-31-bootloaders-and-arm-cortex-m-microcontrollers-design/ class=read-more-link>Read more...</a>
-</div>
-</div>
-</article>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title><a class=post-link href=/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/>Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction</a></h1>
-<div class=post-meta>
-<span class=post-time> 2019-05-19 </span>
-<div class=post-category>
-<a href=/categories/bootloader/> Bootloader </a>
-</div>
-<span class=more-meta> 893 words </span>
-<span class=more-meta> 5 mins read </span>
-</div>
-</header>
-<div class=post-content>
-<div class=post-summary>
-We are introducing a new series to the blog, containing all about bootloaders for small ARM Cortex-M microcontrollers. I hope you like it.
-What is a bootloader? A bootloader is a piece of firmware that takes care of booting the target application, as well as providing a mechanism to update the firmware on the field, where you don&rsquo;t have the means to flash the device using more advanced hardware interfaces such as JTAG, SWD or ICSP.
-</div>
-<div class=read-more>
-<a href=/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/ class=read-more-link>Read more...</a>
 </div>
 </div>
 </article>
