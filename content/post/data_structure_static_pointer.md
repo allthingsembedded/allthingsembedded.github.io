@@ -1,7 +1,7 @@
 ---
 title: "Data Structures: Ditto::static_ptr<Base, Derived, ...>"
 date: 2022-01-02T17:02:33+02:00
-draft: true
+draft: false
 ---
 
 One of the nice things about `C++` compared to `C` is its ability to define reusable types and data structures. They make code reuse easier and also help with reasoning if the abstraction is high-level enough.
