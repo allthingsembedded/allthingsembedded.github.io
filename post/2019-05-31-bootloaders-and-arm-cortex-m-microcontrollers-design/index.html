@@ -1,174 +1,11 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge,chrome=1">
-<title>Bootloaders and ARM Cortex-M microcontrollers: Design - AllThingsEmbedded</title>
-<meta name=renderer content="webkit">
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta http-equiv=cache-control content="no-transform">
-<meta http-equiv=cache-control content="no-siteapp">
-<meta name=theme-color content="#f8f5ec">
-<meta name=msapplication-navbutton-color content="#f8f5ec">
-<meta name=apple-mobile-web-app-capable content="yes">
-<meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec">
-<meta name=author content="Javier Alvarez"><meta name=description content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
-As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader."><meta name=keywords content="Software,Embedded,Engineering">
-<meta name=generator content="Hugo 0.92.0 with theme even">
-<link rel=canonical href=https://allthingsembedded.com/post/2019-05-31-bootloaders-and-arm-cortex-m-microcontrollers-design/>
-<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
-<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
-<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
-<link rel=manifest href=/manifest.json>
-<link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5>
-<link href=/sass/main.min.64709dea827fd8cd68163871eecb608b9747dba02f31ef7b78b54b5be491b06c.css rel=stylesheet>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous>
-<meta property="og:title" content="Bootloaders and ARM Cortex-M microcontrollers: Design">
-<meta property="og:description" content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
-As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://allthingsembedded.com/post/2019-05-31-bootloaders-and-arm-cortex-m-microcontrollers-design/"><meta property="article:section" content="post">
-<meta property="article:published_time" content="2019-05-31T15:37:18+00:00">
-<meta property="article:modified_time" content="2019-05-31T15:37:18+00:00">
-<meta itemprop=name content="Bootloaders and ARM Cortex-M microcontrollers: Design">
-<meta itemprop=description content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
-As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader."><meta itemprop=datePublished content="2019-05-31T15:37:18+00:00">
-<meta itemprop=dateModified content="2019-05-31T15:37:18+00:00">
-<meta itemprop=wordCount content="1692">
-<meta itemprop=keywords content="ARM,bootloader,Cortex-M,Design,Firmware,HAL,HW Abstraction,Microcontroller,STM32F7,"><meta name=twitter:card content="summary">
-<meta name=twitter:title content="Bootloaders and ARM Cortex-M microcontrollers: Design">
-<meta name=twitter:description content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
-As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader."><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script>
-<script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]-->
-</head>
-<body>
-<div id=mobile-navbar class=mobile-navbar>
-<div class=mobile-header-logo>
-<a href=/ class=logo id=mobile-header-logo>
-</a>
-</div>
-<div class=mobile-navbar-icon>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1"><title>Bootloaders and ARM Cortex-M microcontrollers: Design - AllThingsEmbedded</title>
+<meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=Cache-Control content="no-transform"><meta http-equiv=Cache-Control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="Javier Alvarez"><meta name=description content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
+As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader."><meta name=keywords content="Software,Embedded,Engineering"><meta name=generator content="Hugo 0.124.1 with theme even"><link rel=canonical href=https://allthingsembedded.com/post/2019-05-31-bootloaders-and-arm-cortex-m-microcontrollers-design/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link href=/sass/main.min.64709dea827fd8cd68163871eecb608b9747dba02f31ef7b78b54b5be491b06c.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:title" content="Bootloaders and ARM Cortex-M microcontrollers: Design"><meta property="og:description" content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
+As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader."><meta property="og:type" content="article"><meta property="og:url" content="https://allthingsembedded.com/post/2019-05-31-bootloaders-and-arm-cortex-m-microcontrollers-design/"><meta property="article:section" content="post"><meta property="article:published_time" content="2019-05-31T15:37:18+00:00"><meta property="article:modified_time" content="2019-05-31T15:37:18+00:00"><meta itemprop=name content="Bootloaders and ARM Cortex-M microcontrollers: Design"><meta itemprop=description content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
+As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader."><meta itemprop=datePublished content="2019-05-31T15:37:18+00:00"><meta itemprop=dateModified content="2019-05-31T15:37:18+00:00"><meta itemprop=wordCount content="1693"><meta itemprop=keywords content="ARM,bootloader,Cortex-M,Design,Firmware,HAL,HW Abstraction,Microcontroller,STM32F7,"><meta name=twitter:card content="summary"><meta name=twitter:title content="Bootloaders and ARM Cortex-M microcontrollers: Design"><meta name=twitter:description content="Welcome to the second entry of the Bootloader series! Today we are going to be discussing the design and basic architecture of the bootloader application.
+As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader."><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo id=mobile-header-logo></a></div><div class=mobile-navbar-icon><span></span>
 <span></span>
-<span></span>
-<span></span>
-</div>
-</div>
-<nav id=mobile-menu class="mobile-menu slideout-menu">
-<ul class=mobile-menu-list>
-<a href=/>
-<li class=mobile-menu-item>Home</li>
-</a><a href=/post/>
-<li class=mobile-menu-item>Archives</li>
-</a><a href=/tags/>
-<li class=mobile-menu-item>Tags</li>
-</a>
-</ul>
-</nav>
-<script type=text/javascript src=/js/common.js></script>
-<script type=text/javascript>colorize_base16("mobile-header-logo","AllThingsEmbedded")</script>
-<div class=container id=mobile-panel>
-<header id=header class=header>
-<div class=logo-wrapper>
-<a href=/ class=logo id=logo-wrapper>
-</a>
-</div>
-<script type=text/javascript src=/js/common.js></script>
-<script type=text/javascript>colorize_base16("logo-wrapper","AllThingsEmbedded")</script>
-<nav class=site-navbar>
-<ul id=menu class=menu>
-<li class=menu-item>
-<a class=menu-item-link href=/>Home</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/post/>Archives</a>
-</li><li class=menu-item>
-<a class=menu-item-link href=/tags/>Tags</a>
-</li>
-</ul>
-</nav>
-</header>
-<main id=main class=main>
-<div class=content-wrapper>
-<div id=content class=content>
-<article class=post>
-<header class=post-header>
-<h1 class=post-title>Bootloaders and ARM Cortex-M microcontrollers: Design</h1>
-<div class=post-meta>
-<span class=post-time> 2019-05-31 </span>
-<div class=post-category>
-<a href=/categories/bootloader/> Bootloader </a>
-</div>
-<span class=more-meta> 1692 words </span>
-<span class=more-meta> 8 mins read </span>
-</div>
-</header>
-<div class=post-toc id=post-toc>
-<h2 class=post-toc-title>Contents</h2>
-<div class="post-toc-content always-active">
-<nav id=TableOfContents>
-<ul>
-<li>
-<ul>
-<li><a href=#module-descriptions>Module descriptions</a>
-<ul>
-<li><a href=#main-module>Main Module</a></li>
-<li><a href=#startup-code-module>Startup Code Module</a></li>
-<li><a href=#hardware-module>Hardware Module</a></li>
-<li><a href=#bootloader-module>Bootloader Module</a></li>
-</ul>
-</li>
-<li><a href=#defining-partitioning-space-for-flash-and-sram-memories>Defining partitioning space for Flash and SRAM memories</a></li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</div>
-<div class=post-content>
-<p>Welcome to the second entry of the <a href=https://github.com/Javier-varez/stm32_bootloader>Bootloader</a> series! Today we are going to be discussing the design and basic architecture of the bootloader application.</p>
-<p>As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader.</p>
-<p>In addition we need some startup code for the microcontroller. We have already discussed what startup code does and how it can be written to support C++ on a previous post named <a href=/post/2019-01-03-arm-cortex-m-startup-code-for-c-and-c/>ARM Cortex-M Startup Code for C and C++</a>. We are going to be using this code and adding ISR vectors to the NVIC table when we need to register a new ISR Handler.</p>
-<p>In an arquitectural level we could establish the following hierarchy in terms of modules for our Bootloader.</p>
-<p align=center>
-<img src=/images/bootloader_modules.png alt="Bootloader High Level Modules" width=400 style=align-content:center>
-</p>
-<h2 id=module-descriptions>Module descriptions</h2>
-<p>Having already defined the main elements of the project, lets then define the function of each one of them:</p>
-<h3 id=main-module>Main Module</h3>
-<p>This forms the application layer. After the startup code is run, the main function gets called. Inside this function, we should check if the user button of the STM32F7 Discovery board is pressed. If it is pressed, we start the bootloader load process, waiting for commands from the remote loader and turns on the LED to signal bootloader mode. The flow diagram of this module is shown in the next figure.</p>
-<p align=center>
-<img src=/images/bootloader_main_flowchart.png alt="Bootloader Main Flow Chart" width=200 align=center>
-</p>
-<h3 id=startup-code-module>Startup Code Module</h3>
-<p>There is not much to discuss regarding the startup code. Refer to the <a href=/post/2019-01-03-arm-cortex-m-startup-code-for-c-and-c/>ARM Cortex-M startup code for C and C++</a> post if you want to understand how it is crafted.</p>
-<p>Suffice to say that it takes care of initializing the following elements:</p>
-<ul>
-<li>Copying the data section from Flash to RAM.</li>
-<li>Filling with 0 the BSS section inside RAM.</li>
-<li>Calling constructors for all global static objects, which need to be initialized before they can be used inside the program.</li>
-<li>Specifying the Vectored Interrupt table. This contains function pointers to IRQ and Exception handlers, as well as the reset vector and the Initialization value for the Main Stack Pointer (MSP is located at register R13 in the armv7-m architecture).</li>
-<li>Initializing the floating point coprocessor.</li>
-</ul>
-<h3 id=hardware-module>Hardware Module</h3>
-<p>This module is probably the largest of the whole bootloader application. It provides abstractions for all hardware peripherals of the microcontroller. We will need the following drivers:</p>
-<ul>
-<li>GPIO</li>
-<li>SysTick</li>
-<li>RCC (Reset and clock control). This module controls clock gating for each peripheral (GPIO Banks and UART&rsquo;s), as well as the reset properties of the microcontroller.</li>
-<li>SCB (System control block). We will use this to control the NVIC table relocation, as well as controlling access to features of the core Cortex-M7.</li>
-<li>Uart</li>
-<li>Flash</li>
-<li>SRAM</li>
-</ul>
-<p>The following figure shows the relationships between classes, defining interfaces with gray blocks. Red blocks indicate resources specific to the STM32F7 microcontroller. The purple module contains base addresses for each peripheral and as such is very dependent on the specific microcontroller series and part. On the other hand, red peripherals are usually shared between processor families. In order to modularize them, red modules are template classes which are then instantiated into concrete classes in the orange module. Green modules control peripherals that belong to the core itself.</p>
-<p align=center>
-<img src=/images/bootloader_modules_detail.png alt="Detail of the modules of the bootloader" width=800 align=center>
-</p>
-<p>The System Timer is an abstraction of the SysTick driver. It is a system timer that counts milliseconds each time the timer overflows (at a rate of 1 kHz). This is currently the only module that requires interrupts in order to keep time. Given the simplicity of the bootloader no other interrupts are required.</p>
-<p>It is critical to remember that <strong>any peripheral that gets initialized needs to be uninitialized when we jump to the target application</strong>. This is important for multiple reasons, but the most important is that interrupt vectors will be lost once the target application starts since the Interrupt Vector Table has been relocated and might not respond as you expect to interrupts from these peripherals.</p>
-<p>Imagine that we forget to mask interrupts for the SysTick and disable the peripheral. Then, when we relocate the NVIC table we will have a different Interrupt Service Routine for the SysTick module. Moreover, if we have the default handler, we will be running into problems since most of the time it is just implemented as an infinite loop. In order to prevent unexpected behavior in the target application we must first disable the peripheral. Keep in mind that most applications will be written thinking that the reset vector is entered right after a POR, not from a bootloader, but registers might be initialized differently. In order to prevent problems we should just return all peripherals to their original state before jumping to the target application.</p>
-<p>Since we would ideally like these modules to be as generic as possible, they will be template classes with parameters that include the base address of the peripheral and static configuration values. By doing this, we will have the hardware peripheral definition properly isolated from the drivers that handle these peripherals. This is done in a header file called <code>defs.h</code> that will include namespace aliases for the hardware peripherals of our STM32F746 microcontroller. An example of the contents of this file is shown below:</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt> 1
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a></ul></nav><script type=text/javascript src=/js/common.js></script><script type=text/javascript>colorize_base16("mobile-header-logo","AllThingsEmbedded")</script><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo id=logo-wrapper></a></div><script type=text/javascript src=/js/common.js></script><script type=text/javascript>colorize_base16("logo-wrapper","AllThingsEmbedded")</script><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Bootloaders and ARM Cortex-M microcontrollers: Design</h1><div class=post-meta><span class=post-time>2019-05-31</span><div class=post-category><a href=/categories/bootloader/>Bootloader</a></div><span class=more-meta>1693 words </span><span class=more-meta>8 mins read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><ul><li><a href=#module-descriptions>Module descriptions</a><ul><li><a href=#main-module>Main Module</a></li><li><a href=#startup-code-module>Startup Code Module</a></li><li><a href=#hardware-module>Hardware Module</a></li><li><a href=#bootloader-module>Bootloader Module</a></li></ul></li><li><a href=#defining-partitioning-space-for-flash-and-sram-memories>Defining partitioning space for Flash and SRAM memories</a></li></ul></li></ul></nav></div></div><div class=post-content><p>Welcome to the second entry of the <a href=https://github.com/Javier-varez/stm32_bootloader>Bootloader</a> series! Today we are going to be discussing the design and basic architecture of the bootloader application.</p><p>As we talked about on the last post, we are not going to be using any libraries, other than the C++ standard library in order to maximize portability and performance and limit code bloat. This means that we will be writing our own Hardware Abstraction Layer for all the peripherals and core features of the bootloader.</p><p>In addition we need some startup code for the microcontroller. We have already discussed what startup code does and how it can be written to support C++ on a previous post named <a href=/post/2019-01-03-arm-cortex-m-startup-code-for-c-and-c/>ARM Cortex-M Startup Code for C and C++</a>. We are going to be using this code and adding ISR vectors to the NVIC table when we need to register a new ISR Handler.</p><p>In an arquitectural level we could establish the following hierarchy in terms of modules for our Bootloader.</p><p align=center><img src=/images/bootloader_modules.png alt="Bootloader High Level Modules" width=400 style=align-content:center></p><h2 id=module-descriptions>Module descriptions</h2><p>Having already defined the main elements of the project, lets then define the function of each one of them:</p><h3 id=main-module>Main Module</h3><p>This forms the application layer. After the startup code is run, the main function gets called. Inside this function, we should check if the user button of the STM32F7 Discovery board is pressed. If it is pressed, we start the bootloader load process, waiting for commands from the remote loader and turns on the LED to signal bootloader mode. The flow diagram of this module is shown in the next figure.</p><p align=center><img src=/images/bootloader_main_flowchart.png alt="Bootloader Main Flow Chart" width=200 align=center></p><h3 id=startup-code-module>Startup Code Module</h3><p>There is not much to discuss regarding the startup code. Refer to the <a href=/post/2019-01-03-arm-cortex-m-startup-code-for-c-and-c/>ARM Cortex-M startup code for C and C++</a> post if you want to understand how it is crafted.</p><p>Suffice to say that it takes care of initializing the following elements:</p><ul><li>Copying the data section from Flash to RAM.</li><li>Filling with 0 the BSS section inside RAM.</li><li>Calling constructors for all global static objects, which need to be initialized before they can be used inside the program.</li><li>Specifying the Vectored Interrupt table. This contains function pointers to IRQ and Exception handlers, as well as the reset vector and the Initialization value for the Main Stack Pointer (MSP is located at register R13 in the armv7-m architecture).</li><li>Initializing the floating point coprocessor.</li></ul><h3 id=hardware-module>Hardware Module</h3><p>This module is probably the largest of the whole bootloader application. It provides abstractions for all hardware peripherals of the microcontroller. We will need the following drivers:</p><ul><li>GPIO</li><li>SysTick</li><li>RCC (Reset and clock control). This module controls clock gating for each peripheral (GPIO Banks and UART&rsquo;s), as well as the reset properties of the microcontroller.</li><li>SCB (System control block). We will use this to control the NVIC table relocation, as well as controlling access to features of the core Cortex-M7.</li><li>Uart</li><li>Flash</li><li>SRAM</li></ul><p>The following figure shows the relationships between classes, defining interfaces with gray blocks. Red blocks indicate resources specific to the STM32F7 microcontroller. The purple module contains base addresses for each peripheral and as such is very dependent on the specific microcontroller series and part. On the other hand, red peripherals are usually shared between processor families. In order to modularize them, red modules are template classes which are then instantiated into concrete classes in the orange module. Green modules control peripherals that belong to the core itself.</p><p align=center><img src=/images/bootloader_modules_detail.png alt="Detail of the modules of the bootloader" width=800 align=center></p><p>The System Timer is an abstraction of the SysTick driver. It is a system timer that counts milliseconds each time the timer overflows (at a rate of 1 kHz). This is currently the only module that requires interrupts in order to keep time. Given the simplicity of the bootloader no other interrupts are required.</p><p>It is critical to remember that <strong>any peripheral that gets initialized needs to be uninitialized when we jump to the target application</strong>. This is important for multiple reasons, but the most important is that interrupt vectors will be lost once the target application starts since the Interrupt Vector Table has been relocated and might not respond as you expect to interrupts from these peripherals.</p><p>Imagine that we forget to mask interrupts for the SysTick and disable the peripheral. Then, when we relocate the NVIC table we will have a different Interrupt Service Routine for the SysTick module. Moreover, if we have the default handler, we will be running into problems since most of the time it is just implemented as an infinite loop. In order to prevent unexpected behavior in the target application we must first disable the peripheral. Keep in mind that most applications will be written thinking that the reset vector is entered right after a POR, not from a bootloader, but registers might be initialized differently. In order to prevent problems we should just return all peripherals to their original state before jumping to the target application.</p><p>Since we would ideally like these modules to be as generic as possible, they will be template classes with parameters that include the base address of the peripheral and static configuration values. By doing this, we will have the hardware peripheral definition properly isolated from the drivers that handle these peripherals. This is done in a header file called <code>defs.h</code> that will include namespace aliases for the hardware peripherals of our STM32F746 microcontroller. An example of the contents of this file is shown below:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -179,28 +16,18 @@ As we talked about on the last post, we are not going to be using any libraries,
 </span><span class=lnt> 9
 </span><span class=lnt>10
 </span><span class=lnt>11
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=cp>#include</span> <span class=cpf>&#34;Hw/addr.h&#34;</span><span class=cp>
-</span><span class=cp>#include</span> <span class=cpf>&#34;Hw/gpio.h&#34;</span><span class=cp>
-</span><span class=cp></span>
-<span class=k>namespace</span> <span class=n>Hw</span> <span class=p>{</span>
-<span class=c1>// ...
-</span><span class=c1></span><span class=k>using</span> <span class=n>GpioBankC</span> <span class=o>=</span> <span class=n>Hw</span><span class=o>::</span><span class=n>GpioConfig</span><span class=o>::</span><span class=n>Bank</span><span class=o>&lt;</span><span class=n>GPIOC_BASE</span><span class=p>,</span> <span class=n>Hw</span><span class=o>::</span><span class=n>uCRcc</span><span class=o>::</span><span class=n>gpioBankIndex</span><span class=o>::</span><span class=n>C</span><span class=o>&gt;</span><span class=p>;</span>
-<span class=c1>// ...
-</span><span class=c1></span><span class=k>using</span> <span class=n>gpioC6</span>  <span class=o>=</span> <span class=n>Hw</span><span class=o>::</span><span class=n>Gpio</span><span class=o>&lt;</span><span class=n>GpioBankC</span><span class=p>,</span> <span class=n>Hw</span><span class=o>::</span><span class=n>GpioConfig</span><span class=o>::</span><span class=n>bit6</span><span class=o>&gt;</span><span class=p>;</span>
-<span class=k>using</span> <span class=n>gpioC7</span>  <span class=o>=</span> <span class=n>Hw</span><span class=o>::</span><span class=n>Gpio</span><span class=o>&lt;</span><span class=n>GpioBankC</span><span class=p>,</span> <span class=n>Hw</span><span class=o>::</span><span class=n>GpioConfig</span><span class=o>::</span><span class=n>bit7</span><span class=o>&gt;</span><span class=p>;</span>
-<span class=p>...</span>
-<span class=p>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>By doing this and latter including this file to handle peripherals it is very easy to use a GPIO Pin, since it is already defined within the Hw namespace. Also, the <code>addr.h</code> file will contain the base addresses of all peripherals in <code>constexpr</code> declarations.</p>
-<p>In order to get access to a UART we would also like to guarantee that only one UART object is instantiated for a given UART peripheral (let&rsquo;s say for UART 1). The proper way to do this is by making constructors for these classes privates and having a Factory class that provides references to the singletons for each of the peripherals. This is done in the <strong>factory module</strong>.</p>
-<p>Also, since we will create templates for all peripherals and instantiate each class for the given peripheral, we might want to inherit from a common class that provides a common interface for all peripherals of the same type. For instance, I could have a UART1 and UART6. Given this design, different classes are instantiated for each of them, since they have different base addresses. In order to have a common interface, we can inherit from <strong>IUart</strong>. Keep in mind that this also comes at the cost of having a virtual table for the methods that comprise the interface. It may be suitable for large peripherals, but maybe not so much for smaller peripherals (such as GPIO, where many different classes might be instantiated). If what you need is static polimorphism we could probably use <a href=https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern>CRTP</a>. For this reason, GPIO is actually a class template which only contains static methods. No objects are ever created for them.</p>
-<p>The last consideration for the HW module is that we need to remember to provide abstractions for access to SRAM and Flash memories. Since we want our bootloader to handle both indistinctly they will have a common interface with the following methods:</p>
-<div class=highlight><div class=chroma>
-<table class=lntable><tr><td class=lntd>
-<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&#34;Hw/addr.h&#34;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&#34;Hw/gpio.h&#34;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=k>namespace</span> <span class=n>Hw</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>using</span> <span class=n>GpioBankC</span> <span class=o>=</span> <span class=n>Hw</span><span class=o>::</span><span class=n>GpioConfig</span><span class=o>::</span><span class=n>Bank</span><span class=o>&lt;</span><span class=n>GPIOC_BASE</span><span class=p>,</span> <span class=n>Hw</span><span class=o>::</span><span class=n>uCRcc</span><span class=o>::</span><span class=n>gpioBankIndex</span><span class=o>::</span><span class=n>C</span><span class=o>&gt;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>using</span> <span class=n>gpioC6</span>  <span class=o>=</span> <span class=n>Hw</span><span class=o>::</span><span class=n>Gpio</span><span class=o>&lt;</span><span class=n>GpioBankC</span><span class=p>,</span> <span class=n>Hw</span><span class=o>::</span><span class=n>GpioConfig</span><span class=o>::</span><span class=n>bit6</span><span class=o>&gt;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=k>using</span> <span class=n>gpioC7</span>  <span class=o>=</span> <span class=n>Hw</span><span class=o>::</span><span class=n>Gpio</span><span class=o>&lt;</span><span class=n>GpioBankC</span><span class=p>,</span> <span class=n>Hw</span><span class=o>::</span><span class=n>GpioConfig</span><span class=o>::</span><span class=n>bit7</span><span class=o>&gt;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>...</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>By doing this and latter including this file to handle peripherals it is very easy to use a GPIO Pin, since it is already defined within the Hw namespace. Also, the <code>addr.h</code> file will contain the base addresses of all peripherals in <code>constexpr</code> declarations.</p><p>In order to get access to a UART we would also like to guarantee that only one UART object is instantiated for a given UART peripheral (let&rsquo;s say for UART 1). The proper way to do this is by making constructors for these classes privates and having a Factory class that provides references to the singletons for each of the peripherals. This is done in the <strong>factory module</strong>.</p><p>Also, since we will create templates for all peripherals and instantiate each class for the given peripheral, we might want to inherit from a common class that provides a common interface for all peripherals of the same type. For instance, I could have a UART1 and UART6. Given this design, different classes are instantiated for each of them, since they have different base addresses. In order to have a common interface, we can inherit from <strong>IUart</strong>. Keep in mind that this also comes at the cost of having a virtual table for the methods that comprise the interface. It may be suitable for large peripherals, but maybe not so much for smaller peripherals (such as GPIO, where many different classes might be instantiated). If what you need is static polimorphism we could probably use <a href=https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern>CRTP</a>. For this reason, GPIO is actually a class template which only contains static methods. No objects are ever created for them.</p><p>The last consideration for the HW module is that we need to remember to provide abstractions for access to SRAM and Flash memories. Since we want our bootloader to handle both indistinctly they will have a common interface with the following methods:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -212,73 +39,21 @@ As we talked about on the last post, we are not going to be using any libraries,
 </span><span class=lnt>10
 </span><span class=lnt>11
 </span><span class=lnt>12
-</span></code></pre></td>
-<td class=lntd>
-<pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=k>class</span> <span class=nc>IMemory</span> <span class=p>{</span>
-    <span class=c1>// ...
-</span><span class=c1></span>    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint32_t</span> <span class=n>write</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>addr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint8_t</span> <span class=o>*</span><span class=n>data</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>length</span><span class=p>)</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
-    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint32_t</span> <span class=n>read</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>addr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint8_t</span> <span class=o>*</span><span class=n>data</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>length</span><span class=p>)</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
-    <span class=k>virtual</span> <span class=kt>bool</span> <span class=nf>initialize</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
-
-    <span class=k>virtual</span> <span class=kt>bool</span> <span class=nf>validateAddressRange</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>addr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>length</span><span class=p>)</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
-
-    <span class=k>virtual</span> <span class=n>memoryType</span> <span class=nf>getType</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
-    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>getBaseAddress</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
-    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>getSize</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><h3 id=bootloader-module>Bootloader Module</h3>
-<p>The bootloader module is very straightforward. The functional requirements of this module are:</p>
-<ul>
-<li>Providing a custom protocol to handle communication with the remote. This is formed by a command parser and callback functions.</li>
-<li>Starting up the target application after the object code loader is done.</li>
-</ul>
-<p>To accomplish these goals the bootloader will have two methods.</p>
-<ul>
-<li>The <strong>load method</strong> takes care of loading the target application code from the remote by parsing input commands and responding adequately. Once the host has finished the load process the method returns. Behind the scenes, this will use a separate loader module in order to separate command processing from the bootloader module itself.</li>
-<li>The <strong>boot</strong> method takes care of booting the target application. The first parameter is the address of the target application vectored interrupt table. This is needed in order to relocate the NVIC table and to get the reset vector.</li>
-</ul>
-<p>Even though we will actually design the loader in a separate post, I will provide the requirements here.</p>
-<ul>
-<li>It needs to use a UART interface for the command parser.</li>
-<li>It will include some sort of command identification.</li>
-<li>It needs to be reliable in that it will check the integrity of received commands before blindly executing them.</li>
-<li>It needs to check address ranges and data received over the UART port to guarantee the integrity of the bootloader itself, making sure that it cannot be overwritten, bricking the device.</li>
-</ul>
-<h2 id=defining-partitioning-space-for-flash-and-sram-memories>Defining partitioning space for Flash and SRAM memories</h2>
-<p>In order to be able to load code into the Flash and RAM memories we need to reserve some space for the target application code and some space for our bootloader. We will have the smallest Flash block for the bootloader code and the rest of blocks available to the target application (and therefore can be written by the bootloader). In terms of RAM, we have reserved 120 kB for the bootloader and 200 kB for the target application. This might seem a lot, but it makes sense given that we might add Ethernet bootloading in the future.</p>
-<p>The memory layout is:</p>
-<ul>
-<li>Flash:
-<ul>
-<li><code>0x08000000</code> to <code>0x08007FFF</code>: 32 kB block reserved for the bootloader.</li>
-<li><code>0x08008000</code> to the end of flash: Available for the target application.</li>
-</ul>
-</li>
-<li>SRAM:
-<ul>
-<li><code>0x20000000</code> to <code>0x20031FFF</code> (200 kB): Available for the target application.</li>
-<li><code>0x20032000</code> to <code>0x20050000</code> (120 kB): Reserved for the bootloader.</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class=post-copyright>
-<p class=copyright-item>
-<span class=item-title>Author</span>
-<span class=item-content>Javier Alvarez</span>
-</p>
-<p class=copyright-item>
-<span class=item-title>LastMod</span>
-<span class=item-content>
-2019-05-31
-</span>
-</p>
-</div>
-<footer class=post-footer>
-<div class=post-tags>
-<a href=/tags/arm/>ARM</a>
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=k>class</span> <span class=nc>IMemory</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint32_t</span> <span class=n>write</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>addr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint8_t</span> <span class=o>*</span><span class=n>data</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>length</span><span class=p>)</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint32_t</span> <span class=n>read</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>addr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=kt>uint8_t</span> <span class=o>*</span><span class=n>data</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>length</span><span class=p>)</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>virtual</span> <span class=kt>bool</span> <span class=nf>initialize</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>virtual</span> <span class=kt>bool</span> <span class=nf>validateAddressRange</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>addr</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>length</span><span class=p>)</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>virtual</span> <span class=n>memoryType</span> <span class=nf>getType</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=n>uintptr_t</span> <span class=n>getBaseAddress</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>virtual</span> <span class=n>std</span><span class=o>::</span><span class=n>size_t</span> <span class=n>getSize</span><span class=p>()</span> <span class=k>const</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=bootloader-module>Bootloader Module</h3><p>The bootloader module is very straightforward. The functional requirements of this module are:</p><ul><li>Providing a custom protocol to handle communication with the remote. This is formed by a command parser and callback functions.</li><li>Starting up the target application after the object code loader is done.</li></ul><p>To accomplish these goals the bootloader will have two methods.</p><ul><li>The <strong>load method</strong> takes care of loading the target application code from the remote by parsing input commands and responding adequately. Once the host has finished the load process the method returns. Behind the scenes, this will use a separate loader module in order to separate command processing from the bootloader module itself.</li><li>The <strong>boot</strong> method takes care of booting the target application. The first parameter is the address of the target application vectored interrupt table. This is needed in order to relocate the NVIC table and to get the reset vector.</li></ul><p>Even though we will actually design the loader in a separate post, I will provide the requirements here.</p><ul><li>It needs to use a UART interface for the command parser.</li><li>It will include some sort of command identification.</li><li>It needs to be reliable in that it will check the integrity of received commands before blindly executing them.</li><li>It needs to check address ranges and data received over the UART port to guarantee the integrity of the bootloader itself, making sure that it cannot be overwritten, bricking the device.</li></ul><h2 id=defining-partitioning-space-for-flash-and-sram-memories>Defining partitioning space for Flash and SRAM memories</h2><p>In order to be able to load code into the Flash and RAM memories we need to reserve some space for the target application code and some space for our bootloader. We will have the smallest Flash block for the bootloader code and the rest of blocks available to the target application (and therefore can be written by the bootloader). In terms of RAM, we have reserved 120 kB for the bootloader and 200 kB for the target application. This might seem a lot, but it makes sense given that we might add Ethernet bootloading in the future.</p><p>The memory layout is:</p><ul><li>Flash:<ul><li><code>0x08000000</code> to <code>0x08007FFF</code>: 32 kB block reserved for the bootloader.</li><li><code>0x08008000</code> to the end of flash: Available for the target application.</li></ul></li><li>SRAM:<ul><li><code>0x20000000</code> to <code>0x20031FFF</code> (200 kB): Available for the target application.</li><li><code>0x20032000</code> to <code>0x20050000</code> (120 kB): Reserved for the bootloader.</li></ul></li></ul></div><div class=post-copyright><p class=copyright-item><span class=item-title>Author</span>
+<span class=item-content>Javier Alvarez</span></p><p class=copyright-item><span class=item-title>LastMod</span>
+<span class=item-content>2019-05-31</span></p></div><footer class=post-footer><div class=post-tags><a href=/tags/arm/>ARM</a>
 <a href=/tags/bootloader/>bootloader</a>
 <a href=/tags/cortex-m/>Cortex-M</a>
 <a href=/tags/design/>Design</a>
@@ -286,62 +61,15 @@ As we talked about on the last post, we are not going to be using any libraries,
 <a href=/tags/hal/>HAL</a>
 <a href=/tags/hw-abstraction/>HW Abstraction</a>
 <a href=/tags/microcontroller/>Microcontroller</a>
-<a href=/tags/stm32f7/>STM32F7</a>
-</div>
-<nav class=post-nav>
-<a class=prev href=/post/2019-10-12-bootloaders-and-arm-cortex-m-microcontrollers-booting-the-target-application/>
-<i class="iconfont icon-left"></i>
+<a href=/tags/stm32f7/>STM32F7</a></div><nav class=post-nav><a class=prev href=/post/2019-10-12-bootloaders-and-arm-cortex-m-microcontrollers-booting-the-target-application/><i class="iconfont icon-left"></i>
 <span class="prev-text nav-default">Bootloaders and ARM Cortex-M microcontrollers: Booting the target application</span>
 <span class="prev-text nav-mobile">Prev</span>
-</a>
-<a class=next href=/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/>
-<span class="next-text nav-default">Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction</span>
+</a><a class=next href=/post/2019-05-19-bootloaders-and-arm-cortex-m-microcontrollers-stm32f7-introduction/><span class="next-text nav-default">Bootloaders and ARM Cortex-M microcontrollers (STM32F7): Introduction</span>
 <span class="next-text nav-mobile">Next</span>
-<i class="iconfont icon-right"></i>
-</a>
-</nav>
-</footer>
-</article>
-</div>
-<script src=https://utteranc.es/client.js repo=allthingsembedded/allthingsembedded.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script>
-<noscript>Please enable JavaScript to view the <a href=https://github.com/utterance>comments powered by utterances.</a></noscript>
-</div>
-</main>
-<footer id=footer class=footer>
-<div class=social-links>
-<a href=mailto:javier.alvarez@allthingsembedded.net class="iconfont icon-email" title=email></a>
-<a href=https://twitter.com/Javier_varez class="iconfont icon-twitter" title=twitter></a>
-<a href="https://www.linkedin.com/in/javieralvarez17/?locale=en_US" class="iconfont icon-linkedin" title=linkedin></a>
-<a href=https://github.com/Javier-varez class="iconfont icon-github" title=github></a>
-<a href=https://allthingsembedded.com/index.xml type=application/rss+xml class="iconfont icon-rss" title=rss></a>
-</div>
-<div class=copyright>
-<span class=power-by>
-Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
-</span>
-<span class=division>|</span>
-<span class=theme-info>
-Theme -
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><script src=https://utteranc.es/client.js repo=allthingsembedded/allthingsembedded.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script><noscript>Please enable JavaScript to view the <a href=https://github.com/utterance>comments powered by utterances.</a></noscript></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:javier.alvarez@allthingsembedded.net class="iconfont icon-email" title=email></a><a href=https://twitter.com/Javier_varez class="iconfont icon-twitter" title=twitter></a><a href="https://www.linkedin.com/in/javieralvarez17/?locale=en_US" class="iconfont icon-linkedin" title=linkedin></a><a href=https://github.com/Javier-varez class="iconfont icon-github" title=github></a><a href type=application/rss+xml class="iconfont icon-rss" title=rss></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
+</span><span class=division>|</span>
+<span class=theme-info>Theme -
 <a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a>
-</span>
-<span class=copyright-year>
-&copy;
+</span><span class=copyright-year>&copy;
 2018 -
-2022<span class=heart><i class="iconfont icon-heart"></i></span><span>Javier Alvarez</span>
-</span>
-</div>
-</footer>
-<div class=back-to-top id=back-to-top>
-<i class="iconfont icon-up"></i>
-</div>
-</div>
-<script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script>
-<script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script>
-<script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script>
-<script type=text/javascript src=/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js></script>
-<script type=text/javascript>window.MathJax={tex:{}}</script>
-<script async src=https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin=anonymous></script>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-120967880-1','auto'),ga('set','anonymizeIp',!0),ga('send','pageview'))</script>
-<script async src=https://www.google-analytics.com/analytics.js></script>
-</body>
-</html>
+2024<span class=heart><i class="iconfont icon-heart"></i></span><span></span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.4ae89da218555efa0e7093a20b92017d2e1202b66fff9fc2edf4cb8d44b44c6e.js></script><script type=text/javascript>window.MathJax={tex:{}}</script><script async src=https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin=anonymous></script></body></html>
