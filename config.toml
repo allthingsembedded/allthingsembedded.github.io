@@ -21,8 +21,6 @@ disqusShortname = ""      # disqus_shortname
 googleAnalytics = "UA-120967880-1"      # UA-XXXXXXXX-X
 copyright = ""            # default: author.name ↓
 
-[author]                  # essential
-  name = "Javier Alvarez"
 
 [sitemap]                 # essential
   changefreq = "weekly"
@@ -46,6 +44,7 @@ copyright = ""            # default: author.name ↓
   url = "/tags/"
 
 [params]
+  author = { name = "Javier Alvarez" }
   version = "4.x"           # Used to give a friendly message when you have an incompatible update
   debug = false             # If true, load `eruda.min.js`. See https://github.com/liriliri/eruda
 
