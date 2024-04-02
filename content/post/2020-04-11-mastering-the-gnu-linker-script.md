@@ -44,7 +44,7 @@ SECTIONS
     exceptions.o (.isr_vector) /* This matches all .isr_vector sections in the exceptions.o input file */
   }
   .text : { /* This is the output section .text */
-    *(.text) /* This matches all .text sections in all input files */   
+    *(.text) /* This matches all .text sections in all input files */
     *(.text*) /* This matches all .text* sections in all input files */
   }
 }
@@ -78,14 +78,14 @@ Disassembly of section .text:
    1:   48 89 e5                mov    %rsp,%rbp
    4:   90                      nop
    5:   5d                      pop    %rbp
-   6:   c3                      retq   
+   6:   c3                      retq
 
 0000000000000007 <MySecondFunction>:
    7:   55                      push   %rbp
    8:   48 89 e5                mov    %rsp,%rbp
    b:   b8 00 00 00 00          mov    $0x0,%eax
   10:   5d                      pop    %rbp
-  11:   c3                      retq   
+  11:   c3                      retq
 ```
 
 However, if we build with `gcc -c -o test.o test.c -ffunction-sections` we will see the following output:
@@ -100,7 +100,7 @@ Disassembly of section .text.MyFunction:
    1:   48 89 e5                mov    %rsp,%rbp
    4:   90                      nop
    5:   5d                      pop    %rbp
-   6:   c3                      retq   
+   6:   c3                      retq
 
 Disassembly of section .text.MySecondFunction:
 
@@ -109,7 +109,7 @@ Disassembly of section .text.MySecondFunction:
    1:   48 89 e5                mov    %rsp,%rbp
    4:   b8 00 00 00 00          mov    $0x0,%eax
    9:   5d                      pop    %rbp
-   a:   c3                      retq   
+   a:   c3                      retq
 ```
 
 Now each function has it's own section. This is useful if we want to control exact placement of some functions in the output file, as we can now specify the section of the function we want to place. It is also useful when used in conjunction with the`--gc-sections` option of the GNU linker, which will remove any unused input sections from the output file, thus optimizing the size of the target binary.
@@ -288,7 +288,7 @@ typedef struct {
     volatile unsigned int Bit31:1;
 } S_GPIO_REG;
 
-S_GPIO_REG gpio_reg __attribute_((section(".bss.gpio_reg")));
+S_GPIO_REG gpio_reg __attribute__((section(".bss.gpio_reg")));
 ```
 
 This would declare a 32 bit register and we would be able to map it at the specific address where the hardware register is located (let's say address 0x40002000) with the following linker definition:

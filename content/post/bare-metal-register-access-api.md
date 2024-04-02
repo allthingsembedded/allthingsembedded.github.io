@@ -150,7 +150,7 @@ struct StatusRegister {
 
 There are a couple of potential issues we should be aware of though:
   * The __bit order__ in a bitfield is `implementation defined`, therefore, we __need__ to know our compiler behavior to ensure that this code will behave as expected. This also means that __this code is not portable__. In most common compilers, the order of bits in the bitfield starts from the least significant bit first, so buiding with `arm-none-eabi-gcc` or `armclang` will produce correct results for this particular case.
-  * The __types__ a bitfield can hold are limited to __integral types and booleans__. Compilers can augment the number of supported types, but yet again, this is `implementation defined` and varies from compiler to compiler. 
+  * The __types__ a bitfield can hold are limited to __integral types and booleans__. Compilers can augment the number of supported types, but yet again, this is `implementation defined` and varies from compiler to compiler.
 
 Now, assumming we are not concerned with the portability of this code, we can continue building on this solution. The next obvious thing we want to do is access the whole register in one go (without needing to read bits individually). To do so, maybe we could use a union type?
 
@@ -279,8 +279,8 @@ class Register {
   }
 
   /**
-   *  @brief Modifies the value of the register by running a read-modify-write cycle. 
-   *         The mod_functor is called with the read register value as an argument and 
+   *  @brief Modifies the value of the register by running a read-modify-write cycle.
+   *         The mod_functor is called with the read register value as an argument and
    *         should return the desired value to be written to the register.
    */
   template<class FuncPtr, std::enable_if_t<std::is_invocable_v<FuncPtr, uint32_t>, bool> = false>
@@ -319,24 +319,24 @@ class StatusRegister : Register {
    */
   class Fields {
    public:
-    Fields() { 
+    Fields() {
       // Set the register temporary variable to the reset value of the register
       memset(&m_bits, 0, sizeof(m_bits));
     }
-    explicit Fields(uint32_t value) { 
+    explicit Fields(uint32_t value) {
       // Type punning via memcpy is allowed in C++
       memcpy(&m_bits, &value, sizeof(value));
     }
 
     inline bool busy() const { return m_bits.busy; }
-    inline State state() const { return static_cast<State>(m_bits.busy); }
+    inline State state() const { return static_cast<State>(m_bits.state); }
     inline bool frame_error() const { return m_bits.frame_error; }
     inline bool overflow_error() const { return m_bits.ovfl_error; }
 
     inline void clear_overflow_error() { m_bits.ovfl_error = 1; }
     inline void clear_frame_error() { m_bits.frame_error = 1; }
 
-    inline uint32_t reg_value() const { 
+    inline uint32_t reg_value() const {
       uint32_t value = 0;
       memcpy(&value, &m_bits, sizeof(value));
       return value;
@@ -375,10 +375,7 @@ class StatusRegister : Register {
   }
 };
 
-void example_reg_access() {
-  uint32_t status_reg_mem;
-  StatusRegister status_reg {&status_reg_mem};
-  
+void example_reg_access(StatusRegister& status_reg) {
   status_reg.modify([=](const auto& r, auto& w) {
     if (r.frame_error()) {
       w.clear_overflow_error();
@@ -388,7 +385,7 @@ void example_reg_access() {
 }
 ```
 
-The `StatusRegister` class clearly states how to read, write or modify the register, using instances of type `Fields` to interact with these functions. `Fields` can either be instantiated with the value of the register or with the reset value of the register (default constructor). 
+The `StatusRegister` class clearly states how to read, write or modify the register, using instances of type `Fields` to interact with these functions. `Fields` can either be instantiated with the value of the register or with the reset value of the register (default constructor).
 
 The `StatusRegister::Read` method simply returns a `Fields` instance from which we can read the state of the regsiter.
 
@@ -401,7 +398,7 @@ The `Fields` class also takes care of providing the correct encapsulation for th
 `Fields` also provides a type-safe interface. For example, the `Fields::state` mehtod returns a `State` instance, something which was simply not possible with the previous version.
 
 Let's have a look at the tradeoffs of this new implementation.
- 
+
  - **Advantages**:
     - Great control over field types and encapsulation.
     - Functional approach to register writes and register modification actions.
@@ -425,7 +422,7 @@ ARM created a CMSIS System View Description (SVD) specification that although in
 If you want to find the SVD files for common microcontrollers you can also refer to the [CMSIS-Packs](https://developer.arm.com/tools-and-software/embedded/cmsis/cmsis-packs), a standardized way to deliver software components from ARM. SVD files will be contained inside the `.pack` files (which are essentially zip files).
 
 ## Conclusion
- 
+
 In this post we have examined how to control `memory-mapped peripherals` of a CPU in an embedded context by designing an API that allows to control them in a type-safe, performant, free of `undefined behavior` and autogenerated manner. The result was an API that, although quite verbose, can be easily autogenerated and is safe and easy to use in the following regards:
 
   * Explicit. It is very easy to identify when the register is being read/written.
@@ -438,10 +435,9 @@ In this post we have examined how to control `memory-mapped peripherals` of a CP
   * No `undefined behavior` or `implementation-defined behavior`.
 
 **Note**: In this post we have seen quite a few examples of `undefined behavior` and `implementation-defined` behavior. I probably even missed some, but please, do not dismiss the importance of `undefined behavior`. Code that seems to work today might not work tomorrow or even worse, code that __seems__ to work today actually doesn't in some subtle and perverse way. If possible, I would encourage you to look into other safer language alternatives like `Rust`, but of course this is not an option for everybody for multiple reasons (legacy code, language familiarity for the team, compiler support or other factors). That's why I think as C++ developers we need to take an active role in the safety of the code we write and actively work with the best static/dynamic analysis tools at our disposal, as well as learning the intricacies of the language and being remarkably careful about safety.
- 
+
 ## Acknowledgements
 
 The API presented here is inspired from the [`svd2rust`](https://github.com/rust-embedded/svd2rust) project, which uses vendor SVD files to autogenerate rust code for register access known as `peripheral access crates` or `PAC`. The API defined in this article is, after all, an adapted version of the Rust code generated by the `svd2rust` project. Unfortunately, safety is not often the first concern when designing code in C++, but hopefully this article will inspire you to design safer API's, free of the `undefined behavior` which so easily creeps into C++ or C code.
 
 I personally hope Rust will become the next language for embedded development and I see a great wave of developers already pushing for more modern and safer programming practices. For now, many of us still live in C or C++ land, but that should not mean that we cannot benefit from some of the ideas around safety and modern development that are being brought into the embedded community but the new and vibrant embedded rust community.
-
