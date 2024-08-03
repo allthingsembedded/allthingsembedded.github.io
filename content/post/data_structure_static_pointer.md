@@ -1,7 +1,16 @@
 ---
 title: "Data Structures: Ditto::static_ptr<Base, Derived, ...>"
 date: 2022-01-02T17:02:33+02:00
-draft: false
+author: Javier Alvarez
+layout: post
+tags:
+  - Sum types
+  - ADT
+  - C++
+  - Standard Library
+  - Container
+  - API
+  - Object-oriented
 ---
 
 One of the nice things about `C++` compared to `C` is its ability to define reusable types and data structures. They make code reuse easier and also help with reasoning if the abstraction is high-level enough.
@@ -9,32 +18,32 @@ One of the nice things about `C++` compared to `C` is its ability to define reus
 Today we are going to talk about `static_ptr` from the library [Ditto](https://github.com/javier-varez/ditto). Dynamic allocation is often forbidden when developing embedded systems. This leads to allocating most things either in the stack or globally. A `static_ptr` allows the user to statically allocate an object of a derived class and access it as a base class pointer. The nice thing is that it allows to easily implement the `factory pattern` if only one instance of each child is required at a time.
 
 The following is an example of how a `static_ptr` could be used in the context of an embedded system with a display and a fixed number of screens (Menu, Game, About) that can be shown at any time in the display. Since there is only one display, only one screen can be shown at a time. Since only one screen is shown at a time in a given display, we need not worry about allocating each screen individually. Instead only enough memory for the largest can be allocated. This is what `static_ptr` does. It takes care of the ugly memory allocation (dealing with size and alignment requirements of each of the types), makes sure that there is always a valid instance and that the object lifecycle is correctly implemented (construction and destruction). In addition, it makes sure that objects are used only through there base API, creating a common API for all screens.
- 
+
 ```c++
 #include "Ditto/assert.h"
 #include "Ditto/static_ptr.h"
 
-/* 
- * Screen is an abstract base class that provides a common interface for all 
- * actual screen implementations. 
+/*
+ * Screen is an abstract base class that provides a common interface for all
+ * actual screen implementations.
  */
 class Screen {
- public: 
+ public:
   enum class Type { Menu, Game, About };
 
   /*
-   * Virtual destructors are required since the derived class is accessed and 
+   * Virtual destructors are required since the derived class is accessed and
    * destructed throught a base pointer
    */
   virtual ~Screen() {}
 
-  /* 
+  /*
    * Called after it has been invalidated due to some user action or event.
    * The screen will be updated with the new changed contents.
    */
   virtual void Draw(Surface*) = 0;
 
-  /* 
+  /*
    * Performs the exit animation on the surface.
    */
   virtual void DoExit(Surface*) = 0;
@@ -45,15 +54,15 @@ class Screen {
   virtual void DoEntry(Surface*) = 0;
 
   /*
-   * Handles events and delives them to the appropriate widget. If the event is 
+   * Handles events and delives them to the appropriate widget. If the event is
    * handled returns true.
    */
   virtual bool HandleEvent(Event*) = 0;
-}; 
+};
 
 /*
  * Each of the specific diplay implementations. They may have different members,
- * sizes and alignment requirements. As long as all of them implement the base 
+ * sizes and alignment requirements. As long as all of them implement the base
  * class they can be used together with `static_ptr`
  */
 
@@ -119,7 +128,7 @@ void UserDisplay::Transition(Screen::Type screen_type) {
 
 void UserDisplay::ConstructScreen(Screen::Type screen_type) {
   switch (screen_type) {
-    /* Splash screen cannot be constructed after boot, therefore it is ommited 
+    /* Splash screen cannot be constructed after boot, therefore it is ommited
        on the factory method */
     case Screen::Type::Menu:
       m_screen.make<MenuScreen>();
