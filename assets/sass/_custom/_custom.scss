@@ -34,15 +34,55 @@ $base0f: #d27b53;
 .base0e { color: $base0e; }
 .base0f { color: $base0f; }
 
-$theme-color: $base09;
-$deputy-color: #282828;
-$global-font-color: $base06;
-$global-body-width: 1000px;
+$code_white:         #EEFFFF;
+$code_gray:          #a1abe0;
+$code_black:         #000000;
+$code_red:           #ff757f;
+$code_green:         #2df4c0;
+$code_yellow:        #ffc777;
+$code_paleblue:      #d6e7f0;
+$code_cyan:          #b994f1;
+$code_blue:          #04d1f9;
+$code_purple:        #b4a4f4;
+$code_orange:        #f67f81;
+$code_pink:          #ecb2f0;
 
-$global-background: $base01;
-$code-background: #282828;
+$code_bg:            #212337;
+$code_bg_alt:        #0B0E1B;
+$code_fg:            #e4f3fa;
+$code_text:          #757dac;
+$code_comments:      #7486d6;
+$code_selection:     #403c64;
+$code_contrast:      #1b1c2b;
+$code_active:        #414863;
+$code_border:        #414863;
+$code_line_numbers:  #596399;
+$code_highlight:     #a1abe0;
+$code_disabled:      #515772;
+$code_cursor:        #5cb4fc;
+$code_accent:        #a3ace1;
+
+$code_error:         #FF5370;
+$code_link:          #80CBC4;
+
+$code-color: $code_cyan;
+$code-background: $code_bg;
+
+$theme-color: $code_comments;
+$global-body-width: 1000px;
+$deputy-color: $code_bg;
+$post-toc-backgroud: $code_bg;
 
 $logo-font-family: "Lucida Console", "Courier New", monospace bold;
+$global-serif-font-family: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
+
+// For light mode
+// $global-font-color: #393939;
+// $global-background: #ffffff;
+
+// For dark mode
+$global-font-color: $code_paleblue;
+$global-background: $code_bg_alt;
 
 .content-wrapper {
   background: $global-background;
