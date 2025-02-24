@@ -39,9 +39,12 @@
           pkgs.hugo
         ];
 
+        patchPhase = ''
+          mkdir -p themes/
+          cp -r ${even-theme}/ themes/even
+        '';
+
         buildPhase = ''
-          mkdir -p themes/even/
-          cp -r ${even-theme} themes/even
           hugo ${extraBuildArgs}
         '';
 
