@@ -31,28 +31,42 @@
           in
           fn pkgs
         );
+
+      buildHugoPackage = { pkgs, pname, version, src, extraBuildArgs ? "" }: (pkgs.stdenvNoCC.mkDerivation {
+        inherit pname version src;
+
+        nativeBuildInputs = [
+          pkgs.hugo
+        ];
+
+        buildPhase = ''
+          mkdir -p themes/even/
+          cp -r ${even-theme} themes/even
+          hugo ${extraBuildArgs}
+        '';
+
+        installPhase = ''
+          cp -r public $out
+        '';
+      });
+
     in
     {
       packages = forEachSystem (pkgs: rec {
-        allthingsembedded = pkgs.stdenvNoCC.mkDerivation {
+        allthingsembedded = buildHugoPackage {
+          inherit pkgs;
           pname = "allthingsembedded";
           version = "1.0.0";
-
           src = self;
+          extraBuildArgs = "--minify";
+        };
 
-          nativeBuildInputs = [
-            pkgs.hugo
-          ];
-
-          buildPhase = ''
-            mkdir -p themes/even/
-            cp -r ${even-theme} themes/even
-            hugo
-          '';
-
-          installPhase = ''
-            cp -r public $out
-          '';
+        allthingsembedded-staging = buildHugoPackage {
+          inherit pkgs;
+          pname = "allthingsembedded";
+          version = "1.0.0";
+          src = self;
+          extraBuildArgs = "--minify -D --baseURL https://allthingsembedded.com/staging-web";
         };
 
         default = allthingsembedded;
