@@ -14,9 +14,10 @@ pygmentsCodefences = true
 pygmentsUseClasses = true
 pygmentsCodefencesGuessSyntax = true
 
-paginate = 5
 googleAnalytics = "UA-120967880-1"      # UA-XXXXXXXX-X
 
+[pagination]
+pagerSize = 5
 
 [sitemap]                 # essential
   changefreq = "weekly"
