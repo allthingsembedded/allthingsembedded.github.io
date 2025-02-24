@@ -1,0 +1,45 @@
+{
+  "nodes": {
+    "even-theme": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1733146673,
+        "narHash": "sha256-WKuWWyNgs/Xht5J5tcC1gNUFn1Sff/D2qw/N1DGllpY=",
+        "owner": "olOwOlo",
+        "repo": "hugo-theme-even",
+        "rev": "e03080913d6148d055471f76027a33f28234cb32",
+        "type": "github"
+      },
+      "original": {
+        "owner": "olOwOlo",
+        "ref": "master",
+        "repo": "hugo-theme-even",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1740417204,
+        "narHash": "sha256-2OoAzxdJN/SRDX3YuMHGHhvvsN6N5znpMS0DALRd18M=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "3e866679c4cb67f6bf164d09c96fa8e21e25716e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "release-24.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "even-theme": "even-theme",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

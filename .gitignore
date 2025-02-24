@@ -1,2 +1,5 @@
 **/_gen
 public/
+.direnv
+.hugo_build.lock
+result/
