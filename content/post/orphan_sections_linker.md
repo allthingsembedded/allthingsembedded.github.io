@@ -65,7 +65,7 @@ where in memory does this section go?
 This is where things break down. Multiple linkers exhibit different behavior, 
 and the rules seem to be pretty complex, depending on whether any PHDRS have 
 been explicitly declared, and whether any MEMORY nodes are present in the linker 
-script. 
+script.[^1]
 
 For a long time, the issue went unnoticed since the section was placed in RAM, which was the 
 intended behavior. However, at some point, the section was placed in FLASH instead, causing the 
@@ -227,7 +227,7 @@ section is allocated, has the right size of 0.
 ## How can we make the linker script more robust?
 
 After finding this issue, I looked for a way to detect this kind of problem, 
-ideally at compile-time. I found the `--orphaned-handling` flag of the `ld` and `lld` linkers[^1].
+ideally at compile-time. I found the `--orphaned-handling` flag of the `ld` and `lld` linkers[^2].
 This flag allows us to specify what should be the behavior when an orphaned 
 section is encountered. You have the following options:
 
@@ -280,5 +280,9 @@ to your linker script.
     }
 ```
 
-[^1]: You can find the ld documentation for orphaned sections 
+[^1]: MaskRay has a great [article](https://maskray.me/blog/2024-06-02-understanding-orphan-sections) 
+describing some of these placement rules for both ld and lld, if you would like to go deeper into 
+this topic.
+
+[^2]: You can find the ld documentation for orphaned sections 
 [here](https://sourceware.org/binutils/docs/ld/Orphan-Sections.html).
