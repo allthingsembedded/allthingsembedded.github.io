@@ -1,0 +1,374 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1"><title>Linkers and orphaned sections - AllThingsEmbedded</title>
+<meta name=renderer content="webkit"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><meta http-equiv=Cache-Control content="no-transform"><meta http-equiv=Cache-Control content="no-siteapp"><meta name=theme-color content="#f8f5ec"><meta name=msapplication-navbutton-color content="#f8f5ec"><meta name=apple-mobile-web-app-capable content="yes"><meta name=apple-mobile-web-app-status-bar-style content="#f8f5ec"><meta name=author content="Javier Alvarez"><meta name=description content='Problem statement I recently came across a situation in a project where I had the following code:
+1 2 3 4 5 6 7 8 9 10 struct FaultInfo final { uint32_t r0; uint32_t r1; // And all the other register state of a Cortex-M0+ processor // ... uint32_t crc; }; [[gnu::section(".uninit")]] volatile FaultInfo fault_data; I was using this static region of data to persist some fault information across reboots, to log it on the next boot after recovering from the fault.
+'><meta name=keywords content="Software,Embedded,Engineering"><meta name=generator content="Hugo 0.136.5 with theme even"><link rel=canonical href=https://allthingsembedded.com/post/orphan_sections_linker/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/manifest.json><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link href=/sass/main.min.1bc0b1ccabce7c341a15ac616ada786a029897bddcf8d31661ac69b2efb39993.css rel=stylesheet><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin=anonymous><meta property="og:url" content="https://allthingsembedded.com/post/orphan_sections_linker/"><meta property="og:site_name" content="AllThingsEmbedded"><meta property="og:title" content="Linkers and orphaned sections"><meta property="og:description" content='Problem statement I recently came across a situation in a project where I had the following code:
+1 2 3 4 5 6 7 8 9 10 struct FaultInfo final { uint32_t r0; uint32_t r1; // And all the other register state of a Cortex-M0+ processor // ... uint32_t crc; }; [[gnu::section(".uninit")]] volatile FaultInfo fault_data; I was using this static region of data to persist some fault information across reboots, to log it on the next boot after recovering from the fault.'><meta property="og:locale" content="en_us"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2025-02-25T21:13:08+01:00"><meta property="article:modified_time" content="2025-02-25T21:13:08+01:00"><meta property="article:tag" content="ARM"><meta property="article:tag" content="Binutils"><meta property="article:tag" content="GNU"><meta property="article:tag" content="Ld"><meta property="article:tag" content="Lld"><meta property="article:tag" content="Linker Script"><meta itemprop=name content="Linkers and orphaned sections"><meta itemprop=description content='Problem statement I recently came across a situation in a project where I had the following code:
+1 2 3 4 5 6 7 8 9 10 struct FaultInfo final { uint32_t r0; uint32_t r1; // And all the other register state of a Cortex-M0+ processor // ... uint32_t crc; }; [[gnu::section(".uninit")]] volatile FaultInfo fault_data; I was using this static region of data to persist some fault information across reboots, to log it on the next boot after recovering from the fault.'><meta itemprop=datePublished content="2025-02-25T21:13:08+01:00"><meta itemprop=dateModified content="2025-02-25T21:13:08+01:00"><meta itemprop=wordCount content="2044"><meta itemprop=keywords content="ARM,Binutils,GNU,Ld,Lld,Linker Script,Microcontroller"><meta name=twitter:card content="summary"><meta name=twitter:title content="Linkers and orphaned sections"><meta name=twitter:description content='Problem statement I recently came across a situation in a project where I had the following code:
+1 2 3 4 5 6 7 8 9 10 struct FaultInfo final { uint32_t r0; uint32_t r1; // And all the other register state of a Cortex-M0+ processor // ... uint32_t crc; }; [[gnu::section(".uninit")]] volatile FaultInfo fault_data; I was using this static region of data to persist some fault information across reboots, to log it on the next boot after recovering from the fault.'><!--[if lte IE 9]><script src=https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js></script><![endif]--><!--[if lt IE 9]><script src=https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js></script><script src=https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js></script><![endif]--></head><body><div id=mobile-navbar class=mobile-navbar><div class=mobile-header-logo><a href=/ class=logo id=mobile-header-logo></a></div><div class=mobile-navbar-icon><span></span>
+<span></span>
+<span></span></div></div><nav id=mobile-menu class="mobile-menu slideout-menu"><ul class=mobile-menu-list><a href=/><li class=mobile-menu-item>Home</li></a><a href=/post/><li class=mobile-menu-item>Archives</li></a><a href=/tags/><li class=mobile-menu-item>Tags</li></a></ul></nav><script type=text/javascript src=/js/common.js></script><script type=text/javascript>colorize_base16("mobile-header-logo","AllThingsEmbedded")</script><div class=container id=mobile-panel><header id=header class=header><div class=logo-wrapper><a href=/ class=logo id=logo-wrapper></a></div><script type=text/javascript src=/js/common.js></script><script type=text/javascript>colorize_base16("logo-wrapper","AllThingsEmbedded")</script><nav class=site-navbar><ul id=menu class=menu><li class=menu-item><a class=menu-item-link href=/>Home</a></li><li class=menu-item><a class=menu-item-link href=/post/>Archives</a></li><li class=menu-item><a class=menu-item-link href=/tags/>Tags</a></li></ul></nav></header><main id=main class=main><div class=content-wrapper><div id=content class=content><article class=post><header class=post-header><h1 class=post-title>Linkers and orphaned sections</h1><div class=post-meta><span class=post-time>2025-02-25 </span><span class=more-meta>2044 words </span><span class=more-meta>10 mins read</span></div></header><div class=post-toc id=post-toc><h2 class=post-toc-title>Contents</h2><div class="post-toc-content always-active"><nav id=TableOfContents><ul><li><ul><li><a href=#problem-statement>Problem statement</a></li><li><a href=#where-did-my-uninitialized-data-go>Where did my uninitialized data go?</a><ul><li><a href=#figuring-out-where-the-section-is-being-placed>Figuring out where the section is being placed</a></li></ul></li><li><a href=#how-can-we-make-the-linker-script-more-robust>How can we make the linker script more robust?</a></li></ul></li></ul></nav></div></div><div class=post-content><h2 id=problem-statement>Problem statement</h2><p>I recently came across a situation in a project where I had the following code:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-cpp data-lang=cpp><span class=line><span class=cl><span class=k>struct</span> <span class=nc>FaultInfo</span> <span class=k>final</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>uint32_t</span> <span class=n>r0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>uint32_t</span> <span class=n>r1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// And all the other register state of a Cortex-M0+ processor
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=kt>uint32_t</span> <span class=n>crc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=na>[[gnu::section(&#34;.uninit&#34;)]]</span> <span class=k>volatile</span> <span class=n>FaultInfo</span> <span class=n>fault_data</span><span class=p>;</span>
+</span></span></code></pre></td></tr></table></div></div><p>I was using this static region of data to persist some fault information across
+reboots, to log it on the next boot after recovering from the fault.</p><p>After an MCU fault, it can be challenging to determine which hardware and software components are
+still functioning correctly. Thus, it&rsquo;s best to rely on a minimal set of hardware until the MCU is
+rebooted, after which fault logging can be performed to persistent storage or a communication
+interface once the system is stable.</p><p>Of course, this code went along with the following output section declaration
+in the linker script:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>    .uninit ALIGN(4) (NOLOAD) : {
+</span></span><span class=line><span class=cl>        KEEP(*(.uninit))
+</span></span><span class=line><span class=cl>    } &gt; RAM : uninit
+</span></span></code></pre></td></tr></table></div></div><p>This worked well until one day, a refactor affected the linker script, and the <code>.uninit</code> output section
+was mistakenly removed.</p><p>You would think that now this fault data would be placed in <code>.bss</code> or <code>.data</code>,
+or maybe the linker would error out, right? Well, the answer is, it is complicated.</p><h2 id=where-did-my-uninitialized-data-go>Where did my uninitialized data go?</h2><p>When the linker processes an input section in an object file that does not match any
+of the input section matchers defined in the linker script, the section becomes orphaned.</p><p>Orphaned sections are copied to the target ELF executable. So far, so good, because it
+looks like it keeps the same behavior we had with the linker script above. However,
+where in memory does this section go?</p><p>This is where things break down. Multiple linkers exhibit different behavior,
+and the rules seem to be pretty complex, depending on whether any PHDRS have
+been explicitly declared, and whether any MEMORY nodes are present in the linker
+script.<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup></p><p>For a long time, the issue went unnoticed since the section was placed in RAM, which was the
+intended behavior. However, at some point, the section was placed in FLASH instead, causing the
+application to fail. That&rsquo;s how I realized this was an issue.</p><h3 id=figuring-out-where-the-section-is-being-placed>Figuring out where the section is being placed</h3><p>I used <code>readelf</code> to figure out where the section was being placed, as well as the corresponding segment
+in which the section was placed. To figure out the placement of the section you can run:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>$ arm-none-eabi-readelf -S $MY_ELF
+</span></span><span class=line><span class=cl>There are 26 section headers, starting at offset 0x488bc:
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>Section Headers:
+</span></span><span class=line><span class=cl>  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+</span></span><span class=line><span class=cl>  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+</span></span><span class=line><span class=cl>  [ 1] .root_section     PROGBITS        08000000 010000 000040 00   A  0   0  4
+</span></span><span class=line><span class=cl>  [ 2] .text             PROGBITS        08000040 010040 00078a 00  AX  0   0  4
+</span></span><span class=line><span class=cl>  [ 3] .rodata           PROGBITS        080007cc 0107cc 0000d2 00 AMS  0   0  4
+</span></span><span class=line><span class=cl>  [ 4] .data             PROGBITS        20000000 020000 000010 00  WA  0   0  4
+</span></span><span class=line><span class=cl>  [ 5] .uninit           PROGBITS        20000010 020010 000020 00  WA  0   0  4
+</span></span><span class=line><span class=cl>  [ 6] .bss              NOBITS          20000030 020030 00047c 00  WA  0   0  4
+</span></span><span class=line><span class=cl>  [ 7] .comment          PROGBITS        00000000 020030 000029 01  MS  0   0  1
+</span></span><span class=line><span class=cl>  [ 8] .symtab           SYMTAB          00000000 02005c 000730 10      9  59  4
+</span></span><span class=line><span class=cl>  [ 9] .strtab           STRTAB          00000000 02078c 000907 00      0   0  1
+</span></span><span class=line><span class=cl>  [10] .shstrtab         STRTAB          00000000 021093 00012d 00      0   0  1
+</span></span><span class=line><span class=cl>  [11] .debug_loclists   PROGBITS        00000000 0211c0 0000b8 00      0   0  1
+</span></span><span class=line><span class=cl>  [12] .debug_abbrev     PROGBITS        00000000 021278 00177e 00      0   0  1
+</span></span><span class=line><span class=cl>  [13] .debug_info       PROGBITS        00000000 0229f6 013182 00      0   0  1
+</span></span><span class=line><span class=cl>  [14] .debug_str_offset PROGBITS        00000000 035b78 0000a4 00      0   0  1
+</span></span><span class=line><span class=cl>  [15] .debug_str        PROGBITS        00000000 035c1c 00c3ab 01  MS  0   0  1
+</span></span><span class=line><span class=cl>  [16] .debug_addr       PROGBITS        00000000 041fc7 000028 00      0   0  1
+</span></span><span class=line><span class=cl>  [17] .debug_frame      PROGBITS        00000000 041ff0 000490 00      0   0  4
+</span></span><span class=line><span class=cl>  [18] .debug_line       PROGBITS        00000000 042480 0042b9 00      0   0  1
+</span></span><span class=line><span class=cl>  [19] .debug_line_str   PROGBITS        00000000 046739 0002af 01  MS  0   0  1
+</span></span><span class=line><span class=cl>  [20] .debug_loc        PROGBITS        00000000 0469e8 00172a 00      0   0  1
+</span></span><span class=line><span class=cl>  [21] .debug_ranges     PROGBITS        00000000 048112 000478 00      0   0  1
+</span></span><span class=line><span class=cl>  [22] .debug_aranges    PROGBITS        00000000 04858a 000020 00      0   0  1
+</span></span><span class=line><span class=cl>  [23] .interned_strings PROGBITS        00000000 0485aa 0002f8 00      0   0  1
+</span></span><span class=line><span class=cl>  [24] .postform_config  PROGBITS        00000000 0488a4 000004 00      0   0  4
+</span></span><span class=line><span class=cl>  [25] .postform_version PROGBITS        00000000 0488a8 000011 00      0   0  1
+</span></span><span class=line><span class=cl>Key to Flags:
+</span></span><span class=line><span class=cl>  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+</span></span><span class=line><span class=cl>  L (link order), O (extra OS processing required), G (group), T (TLS),
+</span></span><span class=line><span class=cl>  C (compressed), x (unknown), o (OS specific), E (exclude),
+</span></span><span class=line><span class=cl>  y (purecode), p (processor specific)
+</span></span></code></pre></td></tr></table></div></div><p>Here you can see the exact location of the section in memory, at <code>0x20000010</code>. The <code>PROGBITS</code> type
+indicates that the section does have initial data, which should not be the case, considering we do not
+plan on initializing the data, so there&rsquo;s also no point in storing it.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>$ arm-none-eabi-readelf -l $MY_ELF
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>Elf file type is EXEC (Executable file)
+</span></span><span class=line><span class=cl>Entry point 0x8000495
+</span></span><span class=line><span class=cl>There are 5 program headers, starting at offset 52
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>Program Headers:
+</span></span><span class=line><span class=cl>  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+</span></span><span class=line><span class=cl>  LOAD           0x010000 0x08000000 0x08000000 0x00040 0x00040 R E 0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x010040 0x08000040 0x08000040 0x0078a 0x0078a R E 0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x0107cc 0x080007cc 0x080007cc 0x000d2 0x000d2 R   0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x020000 0x20000000 0x080008a0 0x00030 0x00030 RW  0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x020030 0x20000030 0x20000030 0x00000 0x0047c RW  0x10000
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> Section to Segment mapping:
+</span></span><span class=line><span class=cl>  Segment Sections...
+</span></span><span class=line><span class=cl>   00     .root_section
+</span></span><span class=line><span class=cl>   01     .text
+</span></span><span class=line><span class=cl>   02     .rodata
+</span></span><span class=line><span class=cl>   03     .data .uninit
+</span></span><span class=line><span class=cl>   04     .bss
+</span></span></code></pre></td></tr></table></div></div><p>And here we see that the <code>.uninit</code> data section is just being bundled in the same data segment as
+the <code>.data</code> section. This is incorrect because an ELF loader will attempt to load .uninit from the
+ELF file into memory, which contradicts the intent of keeping it uninitialized. Fortunately, this
+isn&rsquo;t a problem in our case since this is a bare-metal application that doesn&rsquo;t use an ELF loader.
+But regardless of this, we are storing more data than we need into the ELF file, bloating its initial
+size. Ideally we want this section to be placed in a segment with <code>FileSiz</code> of 0, like the segment
+number 4, corresponding to the <code>.bss</code> section.</p><p>Now let&rsquo;s look at the fixed ELF, after the section is declared:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>$ arm-none-eabi-readelf -S $MY_ELF
+</span></span><span class=line><span class=cl>There are 26 section headers, starting at offset 0x48d18:
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>Section Headers:
+</span></span><span class=line><span class=cl>  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+</span></span><span class=line><span class=cl>  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+</span></span><span class=line><span class=cl>  [ 1] .root_section     PROGBITS        08000000 010000 000040 00   A  0   0  4
+</span></span><span class=line><span class=cl>  [ 2] .text             PROGBITS        08000040 010040 00078a 00  AX  0   0  4
+</span></span><span class=line><span class=cl>  [ 3] .rodata           PROGBITS        080007cc 0107cc 0000d2 00 AMS  0   0  4
+</span></span><span class=line><span class=cl>  [ 4] .data             PROGBITS        20000000 020000 000010 00  WA  0   0  4
+</span></span><span class=line><span class=cl>  [ 5] .bss              NOBITS          20000010 020010 00047c 00  WA  0   0  4
+</span></span><span class=line><span class=cl>  [ 6] .uninit           NOBITS          2000048c 02048c 000020 00  WA  0   0  4
+</span></span><span class=line><span class=cl>  [ 7] .comment          PROGBITS        00000000 02048c 000029 01  MS  0   0  1
+</span></span><span class=line><span class=cl>  [ 8] .symtab           SYMTAB          00000000 0204b8 000730 10      9  59  4
+</span></span><span class=line><span class=cl>  [ 9] .strtab           STRTAB          00000000 020be8 000907 00      0   0  1
+</span></span><span class=line><span class=cl>  [10] .shstrtab         STRTAB          00000000 0214ef 00012d 00      0   0  1
+</span></span><span class=line><span class=cl>  [11] .debug_loclists   PROGBITS        00000000 02161c 0000b8 00      0   0  1
+</span></span><span class=line><span class=cl>  [12] .debug_abbrev     PROGBITS        00000000 0216d4 00177e 00      0   0  1
+</span></span><span class=line><span class=cl>  [13] .debug_info       PROGBITS        00000000 022e52 013182 00      0   0  1
+</span></span><span class=line><span class=cl>  [14] .debug_str_offset PROGBITS        00000000 035fd4 0000a4 00      0   0  1
+</span></span><span class=line><span class=cl>  [15] .debug_str        PROGBITS        00000000 036078 00c3ab 01  MS  0   0  1
+</span></span><span class=line><span class=cl>  [16] .debug_addr       PROGBITS        00000000 042423 000028 00      0   0  1
+</span></span><span class=line><span class=cl>  [17] .debug_frame      PROGBITS        00000000 04244c 000490 00      0   0  4
+</span></span><span class=line><span class=cl>  [18] .debug_line       PROGBITS        00000000 0428dc 0042b9 00      0   0  1
+</span></span><span class=line><span class=cl>  [19] .debug_line_str   PROGBITS        00000000 046b95 0002af 01  MS  0   0  1
+</span></span><span class=line><span class=cl>  [20] .debug_loc        PROGBITS        00000000 046e44 00172a 00      0   0  1
+</span></span><span class=line><span class=cl>  [21] .debug_ranges     PROGBITS        00000000 04856e 000478 00      0   0  1
+</span></span><span class=line><span class=cl>  [22] .debug_aranges    PROGBITS        00000000 0489e6 000020 00      0   0  1
+</span></span><span class=line><span class=cl>  [23] .interned_strings PROGBITS        00000000 048a06 0002f8 00      0   0  1
+</span></span><span class=line><span class=cl>  [24] .postform_config  PROGBITS        00000000 048d00 000004 00      0   0  4
+</span></span><span class=line><span class=cl>  [25] .postform_version PROGBITS        00000000 048d04 000011 00      0   0  1
+</span></span><span class=line><span class=cl>Key to Flags:
+</span></span><span class=line><span class=cl>  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+</span></span><span class=line><span class=cl>  L (link order), O (extra OS processing required), G (group), T (TLS),
+</span></span><span class=line><span class=cl>  C (compressed), x (unknown), o (OS specific), E (exclude),
+</span></span><span class=line><span class=cl>  y (purecode), p (processor specific)
+</span></span></code></pre></td></tr></table></div></div><p>Now, the <code>.uninit</code> section has the type <code>NOBITS</code>, meaning it will be allocated in memory but not stored
+in the ELF file, ensuring that no unnecessary data is included in the binary. Let&rsquo;s see the segments:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>$ arm-none-eabi-readelf -l $MY_ELF
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>Elf file type is EXEC (Executable file)
+</span></span><span class=line><span class=cl>Entry point 0x8000495
+</span></span><span class=line><span class=cl>There are 6 program headers, starting at offset 52
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>Program Headers:
+</span></span><span class=line><span class=cl>  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+</span></span><span class=line><span class=cl>  LOAD           0x010000 0x08000000 0x08000000 0x00040 0x00040 R E 0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x010040 0x08000040 0x08000040 0x0078a 0x0078a R E 0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x0107cc 0x080007cc 0x080007cc 0x000d2 0x000d2 R   0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x020000 0x20000000 0x080008a0 0x00010 0x00010 RW  0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x020010 0x20000010 0x20000010 0x00000 0x0047c RW  0x10000
+</span></span><span class=line><span class=cl>  LOAD           0x02048c 0x2000048c 0x2000048c 0x00000 0x00020 RW  0x10000
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> Section to Segment mapping:
+</span></span><span class=line><span class=cl>  Segment Sections...
+</span></span><span class=line><span class=cl>   00     .root_section
+</span></span><span class=line><span class=cl>   01     .text
+</span></span><span class=line><span class=cl>   02     .rodata
+</span></span><span class=line><span class=cl>   03     .data
+</span></span><span class=line><span class=cl>   04     .bss
+</span></span><span class=line><span class=cl>   05     .uninit
+</span></span></code></pre></td></tr></table></div></div><p>And now the ELF is fixed, and the <code>FileSiz</code> of section 5, in which the <code>.uninit</code>
+section is allocated, has the right size of 0.</p><h2 id=how-can-we-make-the-linker-script-more-robust>How can we make the linker script more robust?</h2><p>After finding this issue, I looked for a way to detect this kind of problem,
+ideally at compile-time. I found the <code>--orphaned-handling</code> flag of the <code>ld</code> and <code>lld</code> linkers<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>.
+This flag allows us to specify what should be the behavior when an orphaned
+section is encountered. You have the following options:</p><ul><li><code>place</code>: silently ignores that this section is orphaned and places it somewhere in memory.</li><li><code>warn</code>: same as place, but it emits a warning when linking.</li><li><code>error</code>: triggers a link-time error when a section is orphaned.</li><li><code>discard</code>: drops the data in the orphaned section.</li></ul><p>By setting <code>--orphan-handling=error</code>, we prevent silent misplacement of sections,
+ensuring a predictable memory layout. This serves as a safeguard against subtle
+and hard-to-diagnose issues in embedded applications.</p><p>However, setting the <code>--orphan-handling=error</code> flag means that the binary
+does no longer compile. The reason behind this is that I did NOT declare all
+output sections in the linker script, even after I added the <code>.uninit</code>
+section back.</p><p>The problem is that there is a set of sections that are always required for
+any <a href=https://en.wikipedia.org/wiki/Executable_and_Linkable_Format>ELF</a> executable
+to be valid. And similarly, if you intend to use <a href=https://dwarfstd.org/>Dwarf</a> debugging
+information (e.g. using <code>-gdwarf-2</code>), you will need to append some more output sections
+to your linker script.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>    /* ELF Sections */
+</span></span><span class=line><span class=cl>    .comment 0 : { *(.comment) }
+</span></span><span class=line><span class=cl>    .symtab 0 : { *(.symtab) }
+</span></span><span class=line><span class=cl>    .strtab 0 : { *(.strtab) }
+</span></span><span class=line><span class=cl>    .shstrtab 0 : { *(.shstrtab) }
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    /* Dwarf Sections */
+</span></span><span class=line><span class=cl>    .debug_loclists 0 : { *(.debug_loclists) }
+</span></span><span class=line><span class=cl>    .debug_abbrev 0 : { *(.debug_abbrev) }
+</span></span><span class=line><span class=cl>    .debug_info 0 : { *(.debug_info) }
+</span></span><span class=line><span class=cl>    .debug_str_offsets 0 : { *(.debug_str_offsets) }
+</span></span><span class=line><span class=cl>    .debug_str 0 : { *(.debug_str) }
+</span></span><span class=line><span class=cl>    .debug_addr 0 : { *(.debug_addr) }
+</span></span><span class=line><span class=cl>    .debug_frame 0 : { *(.debug_frame) }
+</span></span><span class=line><span class=cl>    .debug_line 0 : { *(.debug_line) }
+</span></span><span class=line><span class=cl>    .debug_line_str 0 : { *(.debug_line_str) }
+</span></span><span class=line><span class=cl>    .debug_loc 0 : { *(.debug_loc) }
+</span></span><span class=line><span class=cl>    .debug_ranges 0 : { *(.debug_ranges) }
+</span></span><span class=line><span class=cl>    .debug_aranges 0 : { *(.debug_aranges) }
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    /* Exceptions are disabled, we don&#39;t need these sections */
+</span></span><span class=line><span class=cl>    /DISCARD/ : {
+</span></span><span class=line><span class=cl>        *(.ARM.exidx);
+</span></span><span class=line><span class=cl>        *(.ARM.attributes);
+</span></span><span class=line><span class=cl>    }
+</span></span></code></pre></td></tr></table></div></div><div class=footnotes role=doc-endnotes><hr><ol><li id=fn:1><p>MaskRay has a great <a href=https://maskray.me/blog/2024-06-02-understanding-orphan-sections>article</a>
+describing some of these placement rules for both ld and lld, if you would like to go deeper into
+this topic.&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p></li><li id=fn:2><p>You can find the ld documentation for orphaned sections
+<a href=https://sourceware.org/binutils/docs/ld/Orphan-Sections.html>here</a>.&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p></li></ol></div></div><div class=post-copyright><p class=copyright-item><span class=item-title>Author</span>
+<span class=item-content>Javier Alvarez</span></p><p class=copyright-item><span class=item-title>LastMod</span>
+<span class=item-content>2025-02-25</span></p></div><footer class=post-footer><div class=post-tags><a href=/tags/arm/>ARM</a>
+<a href=/tags/binutils/>Binutils</a>
+<a href=/tags/gnu/>GNU</a>
+<a href=/tags/ld/>ld</a>
+<a href=/tags/lld/>lld</a>
+<a href=/tags/linker-script/>Linker Script</a>
+<a href=/tags/microcontroller/>Microcontroller</a></div><nav class=post-nav><a class=next href=/post/data_structure_static_pointer/><span class="next-text nav-default">Data Structures: Ditto::static_ptr&lt;Base, Derived, ...></span>
+<span class="next-text nav-mobile">Next</span>
+<i class="iconfont icon-right"></i></a></nav></footer></article></div><script src=https://utteranc.es/client.js repo=allthingsembedded/allthingsembedded.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script><noscript>Please enable JavaScript to view the <a href=https://github.com/utterance>comments powered by utterances.</a></noscript></div></main><footer id=footer class=footer><div class=social-links><a href=mailto:javier.alvarez@allthingsembedded.net class="iconfont icon-email" title=email></a><a href=https://twitter.com/Javier_varez class="iconfont icon-twitter" title=twitter></a><a href="https://www.linkedin.com/in/javieralvarez17/?locale=en_US" class="iconfont icon-linkedin" title=linkedin></a><a href=https://github.com/Javier-varez class="iconfont icon-github" title=github></a></div><div class=copyright><span class=power-by>Powered by <a class=hexo-link href=https://gohugo.io>Hugo</a>
+</span><span class=division>|</span>
+<span class=theme-info>Theme -
+<a class=theme-link href=https://github.com/olOwOlo/hugo-theme-even>Even</a>
+</span><span class=copyright-year>&copy;
+2018 -
+2025<span class=heart><i class="iconfont icon-heart"></i></span><span>Javier Alvarez</span></span></div></footer><div class=back-to-top id=back-to-top><i class="iconfont icon-up"></i></div></div><script src=https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin=anonymous></script><script src=https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin=anonymous></script><script type=text/javascript src=/js/main.min.4ae89da218555efa0e7093a20b92017d2e1202b66fff9fc2edf4cb8d44b44c6e.js></script><script type=text/javascript>window.MathJax={tex:{}}</script><script async src=https://cdn.jsdelivr.net/npm/mathjax@3.0.5/es5/tex-mml-chtml.js integrity="sha256-HGLuEfFcsUJGhvB8cQ8nr0gai9EucOOaIxFw7qxmd+w=" crossorigin=anonymous></script></body></html>

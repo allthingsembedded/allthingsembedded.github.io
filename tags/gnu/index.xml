@@ -1,2 +1,31 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>GNU on AllThingsEmbedded</title><link>https://allthingsembedded.com/tags/gnu/</link><description>Recent content in GNU on AllThingsEmbedded</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 11 Apr 2020 21:25:34 +0000</lastBuildDate><atom:link href="https://allthingsembedded.com/tags/gnu/index.xml" rel="self" type="application/rss+xml"/><item><title>Mastering the GNU linker script</title><link>https://allthingsembedded.com/post/2020-04-11-mastering-the-gnu-linker-script/</link><pubDate>Sat, 11 Apr 2020 21:25:34 +0000</pubDate><guid>https://allthingsembedded.com/post/2020-04-11-mastering-the-gnu-linker-script/</guid><description>&lt;p>Most people getting started with embedded development seem to find linker scripts just another piece of magic required to get up and running with their system. Even when they might already be familiar with memory-mapped peripherals and basic embedded concepts, the linker script and how it interacts with the GNU linker (ld) is still pretty mysterious.&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>GNU on AllThingsEmbedded</title><link>https://allthingsembedded.com/tags/gnu/</link><description>Recent content in GNU on AllThingsEmbedded</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 25 Feb 2025 21:13:08 +0100</lastBuildDate><atom:link href="https://allthingsembedded.com/tags/gnu/index.xml" rel="self" type="application/rss+xml"/><item><title>Linkers and orphaned sections</title><link>https://allthingsembedded.com/post/orphan_sections_linker/</link><pubDate>Tue, 25 Feb 2025 21:13:08 +0100</pubDate><guid>https://allthingsembedded.com/post/orphan_sections_linker/</guid><description>&lt;h2 id="problem-statement">Problem statement&lt;/h2>
+&lt;p>I recently came across a situation in a project where I had the following code:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">struct&lt;/span> &lt;span class="nc">FaultInfo&lt;/span> &lt;span class="k">final&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">uint32_t&lt;/span> &lt;span class="n">r0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">uint32_t&lt;/span> &lt;span class="n">r1&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// And all the other register state of a Cortex-M0+ processor
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="c1">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">uint32_t&lt;/span> &lt;span class="n">crc&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">[[gnu::section(&amp;#34;.uninit&amp;#34;)]]&lt;/span> &lt;span class="k">volatile&lt;/span> &lt;span class="n">FaultInfo&lt;/span> &lt;span class="n">fault_data&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>I was using this static region of data to persist some fault information across
+reboots, to log it on the next boot after recovering from the fault.&lt;/p></description></item><item><title>Mastering the GNU linker script</title><link>https://allthingsembedded.com/post/2020-04-11-mastering-the-gnu-linker-script/</link><pubDate>Sat, 11 Apr 2020 21:25:34 +0000</pubDate><guid>https://allthingsembedded.com/post/2020-04-11-mastering-the-gnu-linker-script/</guid><description>&lt;p>Most people getting started with embedded development seem to find linker scripts just another piece of magic required to get up and running with their system. Even when they might already be familiar with memory-mapped peripherals and basic embedded concepts, the linker script and how it interacts with the GNU linker (ld) is still pretty mysterious.&lt;/p>
 &lt;p>Today we will go through the main functions of a linker script to try to shed some light onto their operation. We covered the basic of cross compilation in a previous post. We mentioned that the linker would be the last step in the compilation process. The job of the linker is to take all input object files and libraries (both shared and static) and generate a single executable file. Let&amp;rsquo;s start with some terminology.&lt;/p></description></item></channel></rss>
