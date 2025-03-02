@@ -192,7 +192,7 @@ Key to Flags:
   y (purecode), p (processor specific)
 ```
 
-Now, the `.uninit` section is marked as NOBITS, meaning it will be allocated in memory but not stored 
+Now, the `.uninit` section has the type `NOBITS`, meaning it will be allocated in memory but not stored 
 in the ELF file, ensuring that no unnecessary data is included in the binary. Let's see the segments:
 
 ```
@@ -231,11 +231,10 @@ ideally at compile-time. I found the `--orphaned-handling` flag of the `ld` and 
 This flag allows us to specify what should be the behavior when an orphaned 
 section is encountered. You have the following options:
 
-- `place`: the worst option. Just silently ignores that this section is orphaned 
-  and places it somewhere in memory.
-- `warn`: same as place, but at least it emits a warning when linking.
-- `error`: trigger a link-time error when a section is orphaned.
-- `discard`: The data in the orphaned section is just dropped.
+- `place`: silently ignores that this section is orphaned and places it somewhere in memory.
+- `warn`: same as place, but it emits a warning when linking.
+- `error`: triggers a link-time error when a section is orphaned.
+- `discard`: drops the data in the orphaned section.
 
 By setting `--orphan-handling=error`, we prevent silent misplacement of sections, 
 ensuring a predictable memory layout. This serves as a safeguard against subtle 
